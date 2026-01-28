@@ -19,7 +19,7 @@ class Go2AmpPitEnvCfg(Go2AmpRoughEnvCfg):
         self.rewards.feet_edge.weight = -4.0
 
         # If the weight of rewards is 0, set rewards to None
-        if self.__class__.__name__ == "Go2AmpPitEnvCfg":
+        if self.__class__.__name__ == "Go2AmpPitEnvCfg" and not self.reward_learning.enabled:
             self.disable_zero_weight_rewards()
 
 @configclass

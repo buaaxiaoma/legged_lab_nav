@@ -12,6 +12,12 @@ import isaaclab.utils.math as math_utils
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
     
+def learned_reward(env: ManagerBasedRLEnv) -> torch.Tensor:
+    reward_learning = getattr(env, "reward_learning", None)
+    if reward_learning is None or not getattr(reward_learning, "enabled", False):
+        return torch.zeros(env.num_envs, device=env.device)
+    return reward_learning.get_reward()
+
 def feet_orientation_l2(env: ManagerBasedRLEnv, 
                           sensor_cfg: SceneEntityCfg, 
                           asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:

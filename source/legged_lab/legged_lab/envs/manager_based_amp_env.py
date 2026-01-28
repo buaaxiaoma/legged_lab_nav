@@ -7,6 +7,7 @@ from isaaclab.envs import ManagerBasedEnv, ManagerBasedRLEnv, VecEnvStepReturn, 
 from isaaclab.managers import ActionManager, ObservationManager, RecorderManager, CommandManager, CurriculumManager, RewardManager, TerminationManager
 
 from legged_lab.managers import MotionDataManager, AnimationManager
+from legged_lab.utils.reward_learning import RewardLearningManager
 from .manager_based_animation_env import ManagerBasedAnimationEnv
 from .manager_based_amp_env_cfg import ManagerBasedAmpEnvCfg
 
@@ -26,7 +27,14 @@ class ManagerBasedAmpEnv(ManagerBasedAnimationEnv):
     cfg: ManagerBasedAmpEnvCfg
     
     def __init__(self, cfg: ManagerBasedAmpEnvCfg, render_mode: str | None = None, **kwargs):
+        self.reward_learning = None
+        self._last_critic_obs = None
         super().__init__(cfg=cfg, render_mode=render_mode, **kwargs)
+
+    def load_managers(self):
+        super().load_managers()
+        if hasattr(self.cfg, "reward_learning") and self.cfg.reward_learning is not None:
+            self.reward_learning = RewardLearningManager(self, self.cfg.reward_learning)
 
     # def _get_amp_observations(self) -> torch.Tensor:
     #     """Get the AMP observations.
@@ -94,6 +102,7 @@ class ManagerBasedAmpEnv(ManagerBasedAnimationEnv):
         self.reset_time_outs = self.termination_manager.time_outs
         # -- reward computation
         self.reward_buf = self.reward_manager.compute(dt=self.step_dt)
+        self._record_reward_learning_step()
         # # -- update AMP observations
         # amp_obs = self._get_amp_observations()
 
@@ -128,9 +137,42 @@ class ManagerBasedAmpEnv(ManagerBasedAnimationEnv):
         # -- compute observations
         # note: done after reset to get the correct observations for reset envs
         self.obs_buf = self.observation_manager.compute(update_history=True)
+        self._update_reward_learning_obs()
         # if len(reset_env_ids) > 0:
         #     self.obs_buf["amp"][reset_env_ids] = amp_obs[reset_env_ids]
         
         # return observations, rewards, resets and extras
         return self.obs_buf, self.reward_buf, self.reset_terminated, self.reset_time_outs, self.extras
 
+    def reset(
+        self, seed: int | None = None, env_ids: Sequence[int] | None = None, options: dict[str, Any] | None = None
+    ) -> tuple[VecEnvObs, dict]:
+        obs, extras = super().reset(seed=seed, env_ids=env_ids, options=options)
+        self._update_reward_learning_obs()
+        return obs, extras
+
+    def _reset_idx(self, env_ids: Sequence[int]):
+        if self.reward_learning is not None and self.reward_learning.enabled:
+            self.reward_learning.on_reset(env_ids)
+        super()._reset_idx(env_ids)
+
+    def update_reward_learning(self, iteration: int):
+        if self.reward_learning is None or not self.reward_learning.enabled:
+            return None
+        if iteration == 0 or iteration % self.reward_learning.cfg.update_interval != 0:
+            return None
+        return self.reward_learning.update(self)
+
+    def _record_reward_learning_step(self):
+        if self.reward_learning is None or not self.reward_learning.enabled:
+            return
+        self.reward_learning.record_step(self, self._last_critic_obs)
+
+    def _update_reward_learning_obs(self):
+        if self.reward_learning is None or not self.reward_learning.enabled:
+            return
+        critic_obs = None
+        if isinstance(self.obs_buf, dict):
+            critic_obs = self.obs_buf.get("critic")
+        if critic_obs is not None:
+            self.reward_learning.set_last_critic_obs(critic_obs)

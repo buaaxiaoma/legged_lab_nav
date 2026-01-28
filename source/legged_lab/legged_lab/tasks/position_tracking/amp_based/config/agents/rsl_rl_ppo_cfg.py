@@ -63,8 +63,8 @@ class Go2RoughPPORunnerAmpCfg(RslRlOnPolicyRunnerCfg):
             amp_discriminator=RslRlAmpCfg.AMPDiscriminatorCfg(
                 hidden_dims=[1024, 512],
                 activation="elu",
-                style_reward_scale=5.0,
-                task_style_lerp=0.75
+                style_reward_scale=1.5,
+                task_style_lerp=0.9
             ),
             loss_type="LSGAN"
         ),

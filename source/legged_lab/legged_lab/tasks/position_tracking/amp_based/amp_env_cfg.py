@@ -206,12 +206,19 @@ class ObservationsCfg:
             func=mdp_amp.key_body_pos_b,
             params=MISSING,
         )
+        feet_contact = ObsTerm(
+            func=mdp_amp.feet_contact,
+            params={
+                "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
+                "threshold": 1.0,
+            },
+        )
         
         def __post_init__(self):
             self.enable_corruption = False
             self.concatenate_terms = True
             self.concatenate_dim = -1
-            self.history_length = 10
+            self.history_length = 5
             self.flatten_history_dim = False
             
     disc: DiscriminatorCfg = DiscriminatorCfg()
@@ -252,6 +259,14 @@ class ObservationsCfg:
                 "animation": MISSING,
                 "flatten_steps_dim": False,
             }
+        )
+        ref_feet_contact = ObsTerm(
+            func=mdp_amp.ref_feet_contact,
+            params={
+                "animation": MISSING,
+                "height_threshold": 0.03,
+                "flatten_steps_dim": False,
+            },
         )
         
         def __post_init__(self):
@@ -370,6 +385,7 @@ class RewardsCfg:
     # General
     is_terminated = RewTerm(func=mdp.is_terminated, weight=0.0)
     joint_deviation = RewTerm(func=mdp.joint_deviation_l1, weight=0.0, params={"asset_cfg": SceneEntityCfg("robot")})
+    learned_reward = RewTerm(func=mdp_amp.learned_reward, weight=0.0)
     
     #command
     heading_command_error_abs = RewTerm(func=mdp.heading_command_error_abs, weight=0.0, 
@@ -487,7 +503,8 @@ class RewardsCfg:
             "RL_ray_sensor_cfg": SceneEntityCfg("RL_foot_height_scanner"),
             "RR_ray_sensor_cfg": SceneEntityCfg("RR_foot_height_scanner"),
             "contact_sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
-            "edge_height_thresh": 0.05,
+            "edge_grad_thresh": 0.1,
+            "edge_curvature_thresh": 0.05,
         },
     )
     feet_stumble = RewTerm(
@@ -513,6 +530,10 @@ class TerminationsCfg:
     illegal_contact = DoneTerm(
         func=mdp.illegal_contact,
         params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=""), "threshold": 1.0},
+    )
+    bad_orientation = DoneTerm(
+        func=mdp.bad_orientation,
+        params={"limit_angle": math.radians(50.0)},
     )
 
 
@@ -590,6 +611,26 @@ class CurriculumCfg:
     # )
 
 @configclass
+class RewardLearningCfg:
+    """Reward learning settings for AMP."""
+    enabled: bool = False
+    update_interval: int = 100
+    log_per_term: bool = False
+    weight_lr: float = 0.05
+    weight_l2: float = 0.02
+    weight_clip: float = 50.0
+    min_episodes: int = 32
+    target_terms: list[str] = ["position_tracking"]
+    weight_init: dict[str, float] = {}
+    learned_reward_lr: float = 1.0e-3
+    learned_reward_hidden_dims: list[int] = [256, 256]
+    learned_reward_batch_size: int = 1024
+    learned_reward_buffer_size: int = 50000
+    learned_reward_epochs: int = 1
+    learned_reward_samples_per_step: int = 512
+    learned_reward_max_grad_norm: float = 1.0
+
+@configclass
 class MotionDataCfg:
     """Motion data settings for the MDP."""
     motion_dataset = MotionDataTerm(
@@ -638,6 +679,7 @@ class LocomotionAmpEnvCfg(ManagerBasedAmpEnvCfg):
     terminations: TerminationsCfg = TerminationsCfg()
     events: EventCfg = EventCfg()
     curriculum: CurriculumCfg = CurriculumCfg()
+    reward_learning: RewardLearningCfg = RewardLearningCfg()
     # Motion data
     motion_data: MotionDataCfg = MotionDataCfg()
     # Animation

@@ -17,7 +17,7 @@ class Go2AmpGapEnvCfg(Go2AmpRoughEnvCfg):
         self.rewards.base_lin_vel_z.weight = 0
         self.rewards.feet_edge.weight = -5.0
         # If the weight of rewards is 0, set rewards to None
-        if self.__class__.__name__ == "Go2AmpGapEnvCfg":
+        if self.__class__.__name__ == "Go2AmpGapEnvCfg" and not self.reward_learning.enabled:
             self.disable_zero_weight_rewards()
 
 @configclass
