@@ -139,26 +139,20 @@ class CommandsCfg:
         velocity_control_stiffness=2.0,
         heading_control_stiffness=2.0,
         rel_standing_envs=0.05,
-        ranges=mdp.PoseVelocityCommandCfg.Ranges(lin_vel_x=(0.0, 0.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(-1.0, 1.0)),
-        random_velocity_terrain=["perlin_rough_stand"],
+        ranges=mdp.PoseVelocityCommandCfg.Ranges(lin_vel_x=(0.0, 3.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(-1.0, 1.0)),
         velocity_ranges={
-            "perlin_rough": {"lin_vel_x": (0.45, 1.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
-            "perlin_rough_stand": {"lin_vel_x": (0.0, 0.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
-            "square_gaps_easy": {"lin_vel_x": (0.40, 0.75), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-0.8, 0.8)},
-            "square_gaps_hard": {"lin_vel_x": (0.35, 0.65), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-0.6, 0.6)},
-            "stairs_up_down": {"lin_vel_x": (0.35, 0.70), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-0.7, 0.7)},
-            "stairs_down_up": {"lin_vel_x": (0.30, 0.65), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-0.6, 0.6)},
-            "pyramid_stairs_high": {"lin_vel_x": (0.35, 0.70), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-0.7, 0.7)},
-            "pyramid_stairs_inv_high": {
-                "lin_vel_x": (0.30, 0.60),
-                "lin_vel_y": (0.0, 0.0),
-                "ang_vel_z": (-0.5, 0.5),
-            },
-        },
+        "perlin_rough": {"lin_vel_x": (0.0, 3.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "square_gaps_easy": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "square_gaps_hard": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "stairs_up_down": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "stairs_down_up": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "pyramid_stairs_high": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "pyramid_stairs_inv_high": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+    },
         only_positive_lin_vel_x=True,
         lin_vel_threshold=0.0,
         ang_vel_threshold=0.0,
-        target_dis_threshold=0.4,
+        target_dis_threshold=0.2,
     )
 
 
@@ -531,7 +525,7 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
     terrain_levels = CurrTerm(
-        func=mdp.tracking_exp_vel, params={"lin_vel_threshold": (0.3, 0.6), "ang_vel_threshold": (0.0, 0.0)}
+        func=mdp.terrain_levels_pos, params={"threshold": 0.2}
     )
 ##
 # Environment configuration

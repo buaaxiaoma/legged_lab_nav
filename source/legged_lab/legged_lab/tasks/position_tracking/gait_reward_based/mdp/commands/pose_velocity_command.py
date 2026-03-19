@@ -140,8 +140,8 @@ class PoseVelocityCommand(CommandTerm):
 
     @property
     def pose_command(self) -> torch.Tensor:
-        """The desired base pose command in the base frame. Shape is (num_envs, 3)."""
-        return torch.cat([self.pos_command_b[:, :2], self.vel_command_b[:, 0:1]], dim=1)
+        """The desired base pose command in the base frame. Shape is (num_envs, 2)."""
+        return self.pos_command_b[:, :2]
 
     @property
     def robot_velocity_w(self) -> torch.Tensor:
