@@ -57,7 +57,7 @@ def stalling_penalty(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     distance = torch.norm(command.robot_pos_w - command.target_pos_w, dim=-1)  # (num_envs,)
 
     # Condition for when to apply the reward
-    condition = (speed < 0.2) & (distance > 0.3)
+    condition = (speed < 0.2) & (distance > 0.25)
     
     # Calculate reward using torch.where for vectorized operation
     reward = torch.where(condition, 1.0, 0.0)
@@ -81,10 +81,18 @@ def stand_still(
     )
 
 def heading_error(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
-    """Compute the heading error between the robot's current heading and the goal heading."""
-    # compute the error
-    ang_vel_cmd = torch.abs(env.command_manager.get_command(command_name)[:, 2])
-    return ang_vel_cmd
+    """Compute the absolute heading error between current yaw and goal direction."""
+    command: PoseVelocityCommand = env.command_manager.get_term(command_name)
+
+    # Use the command term's wrapped heading error when available.
+    if hasattr(command, "heading_command_w"):
+        return torch.abs(command.heading_command_w)
+
+    target_vec = command.target_pos_w - command.robot_pos_w
+    target_direction = torch.atan2(target_vec[:, 1], target_vec[:, 0])
+    asset: Articulation = env.scene["robot"]
+    heading_err = math_utils.wrap_to_pi(target_direction - asset.data.heading_w)
+    return torch.abs(heading_err)
 
 
 def feet_acceleration_penalty(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg) -> torch.Tensor:

@@ -240,6 +240,7 @@ class PoseVelocityCommand(CommandTerm):
 
     def _update_command(self):
         """Re-target the position command to the current root state."""
+        prev_vel_command_b = self.vel_command_b.clone()
         target_vec = self.pos_command_w - self.robot.data.root_pos_w[:, :3]
         target_dist = torch.norm(target_vec[:, :2], dim=1)
         self.pos_command_b[:] = quat_apply_inverse(yaw_quat(self.robot.data.root_quat_w), target_vec)
@@ -307,6 +308,32 @@ class PoseVelocityCommand(CommandTerm):
         self.vel_command_b[random_velocity_env_ids, 0] = self.random_lin_vel_x[random_velocity_env_ids]
         self.vel_command_b[random_velocity_env_ids, 1] = self.random_lin_vel_y[random_velocity_env_ids]
         self.vel_command_b[random_velocity_env_ids, 2] = self.random_ang_vel_z[random_velocity_env_ids]
+
+        if self.cfg.disallow_reverse_target_component:
+            target_dir_b = self.pos_command_b[:, :2]
+            target_norm = torch.norm(target_dir_b, dim=1, keepdim=True)
+            valid_target_dir = target_norm.squeeze(-1) > 1e-6
+            target_unit = target_dir_b / torch.clamp(target_norm, min=1e-6)
+            forward_proj = torch.sum(self.vel_command_b[:, :2] * target_unit, dim=1)
+            away_mask = (target_dist > self.cfg.target_dis_threshold) & valid_target_dir & (forward_proj < 0.0)
+            if away_mask.any():
+                self.vel_command_b[away_mask, :2] -= (
+                    forward_proj[away_mask].unsqueeze(-1) * target_unit[away_mask]
+                )
+
+        if self.cfg.max_linear_cmd_step > 0.0:
+            delta_lin = self.vel_command_b[:, :2] - prev_vel_command_b[:, :2]
+            delta_lin = torch.clamp(delta_lin, -self.cfg.max_linear_cmd_step, self.cfg.max_linear_cmd_step)
+            self.vel_command_b[:, :2] = prev_vel_command_b[:, :2] + delta_lin
+
+        if self.cfg.max_angular_cmd_step > 0.0:
+            delta_ang = self.vel_command_b[:, 2] - prev_vel_command_b[:, 2]
+            delta_ang = torch.clamp(delta_ang, -self.cfg.max_angular_cmd_step, self.cfg.max_angular_cmd_step)
+            self.vel_command_b[:, 2] = prev_vel_command_b[:, 2] + delta_ang
+
+        if self.cfg.command_smoothing_factor > 0.0:
+            alpha = torch.clamp(torch.tensor(self.cfg.command_smoothing_factor, device=self.device), 0.0, 0.999)
+            self.vel_command_b = alpha * prev_vel_command_b + (1.0 - alpha) * self.vel_command_b
 
     def _set_debug_vis_impl(self, debug_vis: bool):
         # create markers if necessary for the first tome

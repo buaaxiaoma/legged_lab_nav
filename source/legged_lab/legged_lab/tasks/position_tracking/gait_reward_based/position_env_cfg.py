@@ -341,15 +341,15 @@ class EventCfg:
     )
 
     # reset
-    randomize_apply_external_force_torque = EventTerm(
-        func=mdp.apply_external_force_torque,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=""),
-            "force_range": (-10.0, 10.0),
-            "torque_range": (-10.0, 10.0),
-        },
-    )
+    # randomize_apply_external_force_torque = EventTerm(
+    #     func=mdp.apply_external_force_torque,
+    #     mode="reset",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot", body_names=""),
+    #         "force_range": (-10.0, 10.0),
+    #         "torque_range": (-10.0, 10.0),
+    #     },
+    # )
 
     randomize_reset_joints = EventTerm(
         func=mdp.reset_joints_by_scale,
@@ -390,12 +390,12 @@ class EventCfg:
     )
 
     # interval
-    randomize_push_robot = EventTerm(
-        func=mdp.push_by_setting_velocity,
-        mode="interval",
-        interval_range_s=(4.0, 8.0),
-        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
-    )
+    # randomize_push_robot = EventTerm(
+    #     func=mdp.push_by_setting_velocity,
+    #     mode="interval",
+    #     interval_range_s=(4.0, 8.0),
+    #     params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
+    # )
 
 
 @configclass
@@ -535,7 +535,7 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
     terrain_levels = CurrTerm(
-        func=mdp.tracking_exp_vel
+        func=mdp.terrain_levels_pos, params={"threshold": 0.2, "asset_cfg": SceneEntityCfg("robot")}
     )
 ##
 # Environment configuration

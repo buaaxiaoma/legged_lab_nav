@@ -67,6 +67,18 @@ class PoseVelocityCommandCfg(CommandTermCfg):
     target_dis_threshold: float = 0.2
     """The distance threshold to the target position below which the command is set to zero. Defaults to 0.2."""
 
+    disallow_reverse_target_component: bool = False
+    """If True, remove linear-velocity components that point away from target direction in body frame."""
+
+    max_linear_cmd_step: float = 0.0
+    """Maximum per-step change for each linear command component (m/s). 0 disables slew limiting."""
+
+    max_angular_cmd_step: float = 0.0
+    """Maximum per-step change for angular-z command (rad/s). 0 disables slew limiting."""
+
+    command_smoothing_factor: float = 0.0
+    """Exponential smoothing factor in [0, 1). 0 disables smoothing, higher values are smoother."""
+
     flat_patch_visualizer_cfg: VisualizationMarkersCfg = VisualizationMarkersCfg(
         prim_path="/Visuals/TerrainFlatPatches",
         markers={
