@@ -482,6 +482,16 @@ class RewardsCfg:
             "threshold": 0.5,
         },
     )
+    feet_clearance = RewTerm(
+        func=mdp.feet_clearance,
+        weight=0.0,
+        params={
+            "target_height": 0.08,
+            "std": 0.05,
+            "tanh_mult": 2.0,
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
+        },
+    )
     feet_edge = RewTerm(
         func=mdp.feet_edge_penalty,
         weight=0.0,
@@ -525,7 +535,7 @@ class TerminationsCfg:
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
     terrain_levels = CurrTerm(
-        func=mdp.terrain_levels_pos, params={"threshold": 0.2}
+        func=mdp.tracking_exp_vel
     )
 ##
 # Environment configuration

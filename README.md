@@ -270,8 +270,6 @@ If you want to train it using symmetry data augmentation, you can run the follow
 python scripts/rsl_rl/train.py --task=Lab-Position-Rough-Unitree-Go2-v0 --headless --agent=rsl_rl_with_symmetry_cfg_entry_point --run_name=with_symmetry
 ```
 
-For more types of terrains, you can replace "Rough" with "Pit" or "Gap" in the commands above.
-
 </details>
 
 <details>
@@ -297,7 +295,6 @@ To train the AMP algorithm, you can run the following command:
 python scripts/rsl_rl/train.py --task Lab-Position-Rough-AMP-Go2-v0 --headless --max_iterations 50000
 ```
 
-For more types of terrains, you can replace "Rough" with "Pit" or "Gap" in the commands above.
 
 </details>
 
