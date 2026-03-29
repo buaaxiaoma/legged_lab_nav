@@ -6,7 +6,7 @@ from legged_lab.tasks.position_tracking.gait_reward_based.mdp.symmetry import go
 @configclass
 class UnitreeGo2RoughPPORunnerCfg(RslRlOnPolicyRunnerCfg):
     num_steps_per_env = 24
-    max_iterations = 20000
+    max_iterations = 50000
     save_interval = 500
     experiment_name = "unitree_go2_rough"
     policy = RslRlPpoActorCriticCfg(

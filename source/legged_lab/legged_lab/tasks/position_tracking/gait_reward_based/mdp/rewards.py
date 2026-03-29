@@ -57,7 +57,7 @@ def stalling_penalty(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     distance = torch.norm(command.robot_pos_w - command.target_pos_w, dim=-1)  # (num_envs,)
 
     # Condition for when to apply the reward
-    condition = (speed < 0.2) & (distance > 0.25)
+    condition = (speed < 0.1) & (distance > 0.25)
     
     # Calculate reward using torch.where for vectorized operation
     reward = torch.where(condition, 1.0, 0.0)
@@ -69,13 +69,12 @@ def stand_still(
     command_name: str,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
     threshold: float = 0.15,
-    offset: float = 1.0,
 ) -> torch.Tensor:
     """Penalize moving when there is no velocity command."""
     asset = env.scene[asset_cfg.name]
     dof_error = torch.sum(torch.abs(asset.data.joint_pos - asset.data.default_joint_pos), dim=1)
     return (
-        (dof_error - offset)
+        dof_error
         * (torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) < threshold)
         * (torch.abs(env.command_manager.get_command(command_name)[:, 2]) < threshold)
     )
@@ -255,6 +254,18 @@ class GaitReward(ManagerTermBase):
         se_act_1 = torch.clip(torch.square(contact_time[:, foot_0] - air_time[:, foot_1]), max=self.max_err**2)
         return torch.exp(-(se_act_0 + se_act_1) / self.std)
 
+def air_time_variance_penalty(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
+    """Penalize variance in the amount of time each foot spends in the air/on the ground relative to each other"""
+    # extract the used quantities (to enable type-hinting)
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    if contact_sensor.cfg.track_air_time is False:
+        raise RuntimeError("Activate ContactSensor's track_air_time!")
+    # compute the reward
+    last_air_time = contact_sensor.data.last_air_time[:, sensor_cfg.body_ids]
+    last_contact_time = contact_sensor.data.last_contact_time[:, sensor_cfg.body_ids]
+    return torch.var(torch.clip(last_air_time, max=0.5), dim=1) + torch.var(
+        torch.clip(last_contact_time, max=0.5), dim=1
+    )
 
 def feet_height_body(
     env: ManagerBasedRLEnv,
@@ -292,21 +303,6 @@ def feet_height_body(
     # Scale with gravity projection (optional, but good for stability)
     reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
     return reward
-
-
-def feet_clearance(
-    env: ManagerBasedRLEnv,
-    asset_cfg: SceneEntityCfg,
-    target_height: float,
-    std: float,
-    tanh_mult: float,
-) -> torch.Tensor:
-    """Reward swinging feet for clearing a target height."""
-    asset: RigidObject = env.scene[asset_cfg.name]
-    foot_z_target_error = torch.square(asset.data.body_pos_w[:, asset_cfg.body_ids, 2] - target_height)
-    foot_velocity_tanh = torch.tanh(tanh_mult * torch.norm(asset.data.body_lin_vel_w[:, asset_cfg.body_ids, :2], dim=2))
-    reward = foot_z_target_error * foot_velocity_tanh
-    return torch.exp(-torch.sum(reward, dim=1) / std)
 
 def feet_edge_penalty(
     env: ManagerBasedRLEnv,

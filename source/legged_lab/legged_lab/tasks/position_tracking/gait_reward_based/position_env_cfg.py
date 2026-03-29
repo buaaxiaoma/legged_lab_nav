@@ -141,18 +141,18 @@ class CommandsCfg:
         rel_standing_envs=0.05,
         ranges=mdp.PoseVelocityCommandCfg.Ranges(lin_vel_x=(0.0, 3.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(-1.0, 1.0)),
         velocity_ranges={
-        "perlin_rough": {"lin_vel_x": (0.0, 3.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
-        "square_gaps_easy": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
-        "square_gaps_hard": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
-        "stairs_up_down": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
-        "stairs_down_up": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
-        "pyramid_stairs_high": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
-        "pyramid_stairs_inv_high": {"lin_vel_x": (0.0, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "perlin_rough": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "square_gaps_easy": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "square_gaps_hard": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "stairs_up_down": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "stairs_down_up": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "pyramid_stairs_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
+        "pyramid_stairs_inv_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.0, 1.0)},
     },
         only_positive_lin_vel_x=True,
         lin_vel_threshold=0.0,
         ang_vel_threshold=0.0,
-        target_dis_threshold=0.2,
+        target_dis_threshold=0.15,
     )
 
 
@@ -202,7 +202,7 @@ class ObservationsCfg:
         joint_vel = ObsTerm(
             func=mdp.joint_vel_rel,
             params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
-            noise=Unoise(n_min=-1.5, n_max=1.5),
+            noise=Unoise(n_min=-0.5, n_max=0.5),
             clip=(-100.0, 100.0),
             scale=1.0,
         )
@@ -211,16 +211,21 @@ class ObservationsCfg:
             clip=(-100.0, 100.0),
             scale=1.0,
         )
+        # height_scan = ObsTerm(
+        #     func=mdp.HeightScanRand,
+        #     params={"asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"), 
+        #             "sensor_cfg": SceneEntityCfg("height_scanner"),
+        #             "grid_height": 17,
+        #             "grid_width": 11,
+        #             "random_delay_max_frames": 3,
+        #             "random_delay_resample_prob": 0.1},
+        #     clip=(-1.0, 1.0),
+        #     scale=1.0,
+        # )
         height_scan = ObsTerm(
-            func=mdp.HeightScanRand,
-            params={"asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"), 
-                    "sensor_cfg": SceneEntityCfg("height_scanner"),
-                    "grid_height": 17,
-                    "grid_width": 11,
-                    "random_delay_max_frames": 3,
-                    "random_delay_resample_prob": 0.1},
-            clip=(-1.0, 1.0),
-            scale=1.0,
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            noise=Unoise(n_min=-0.1, n_max=0.1),
         )
 
         def __post_init__(self):
@@ -271,16 +276,20 @@ class ObservationsCfg:
             clip=(-100.0, 100.0),
             scale=1.0,
         )
+        # height_scan = ObsTerm(
+        #     func=mdp.HeightScanRand,
+        #     params={"asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
+        #             "sensor_cfg": SceneEntityCfg("height_scanner"),
+        #             "grid_height": 17,
+        #             "grid_width": 11,
+        #             "random_delay_max_frames": 3,
+        #             "random_delay_resample_prob": 0.1},
+        #     clip=(-1.0, 1.0),
+        #     scale=1.0,
+        # )
         height_scan = ObsTerm(
-            func=mdp.HeightScanRand,
-            params={"asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
-                    "sensor_cfg": SceneEntityCfg("height_scanner"),
-                    "grid_height": 17,
-                    "grid_width": 11,
-                    "random_delay_max_frames": 3,
-                    "random_delay_resample_prob": 0.1},
-            clip=(-1.0, 1.0),
-            scale=1.0,
+            func=mdp.height_scan,
+            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
         )
 
         def __post_init__(self):
@@ -361,17 +370,17 @@ class EventCfg:
         },
     )
 
-    randomize_actuator_gains = EventTerm(
-        func=mdp.randomize_actuator_gains,
-        mode="reset",
-        params={
-            "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
-            "stiffness_distribution_params": (0.5, 2.0),
-            "damping_distribution_params": (0.5, 2.0),
-            "operation": "scale",
-            "distribution": "uniform",
-        },
-    )
+    # randomize_actuator_gains = EventTerm(
+    #     func=mdp.randomize_actuator_gains,
+    #     mode="reset",
+    #     params={
+    #         "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
+    #         "stiffness_distribution_params": (0.5, 2.0),
+    #         "damping_distribution_params": (0.5, 2.0),
+    #         "operation": "scale",
+    #         "distribution": "uniform",
+    #     },
+    # )
 
     randomize_reset_base = EventTerm(
         func=mdp.reset_root_state_uniform,
@@ -413,11 +422,11 @@ class RewardsCfg:
     track_ang_vel_z_exp = RewTerm(
         func=mdp.track_ang_vel_z_exp, weight=2.0, params={"command_name": "base_velocity", "std": 0.5}
     )
-    heading_error = RewTerm(func=mdp.heading_error, weight=-1.0, params={"command_name": "base_velocity"})
-    stand_still = RewTerm(func=mdp.stand_still, weight=-0.3, params={"command_name": "base_velocity", "offset": 4.0})
+    heading_error = RewTerm(func=mdp.heading_error, weight=0.0, params={"command_name": "base_velocity"})
+    stand_still = RewTerm(func=mdp.stand_still, weight=0.0, params={"command_name": "base_velocity"})
     stalling_penalty = RewTerm(
         func=mdp.stalling_penalty,
-        weight=-1.0,
+        weight=0.0,
         params={"command_name": "base_velocity"},
     )
 
@@ -425,6 +434,7 @@ class RewardsCfg:
     base_height = RewTerm(func=mdp.base_height_l1, weight=0.0, params={"sensor_cfg": SceneEntityCfg("height_scanner_base")})
     base_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=0.0)
     base_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=0.0)
+    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=0.0)
     
     # Joint penalties
     joint_torques_l2 = RewTerm(
@@ -436,7 +446,7 @@ class RewardsCfg:
     joint_acc_l2 = RewTerm(
         func=mdp.joint_acc_l2, weight=0.0, params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*")}
     )
-
+    action_rate_l2 = RewTerm(func=mdp.action_rate_l2, weight=-0.01)
     joint_pos_limits = RewTerm(
         func=mdp.joint_pos_limits, weight=0.0, params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*")}
     )
@@ -482,15 +492,19 @@ class RewardsCfg:
             "threshold": 0.5,
         },
     )
-    feet_clearance = RewTerm(
-        func=mdp.feet_clearance,
+    feet_height = RewTerm(
+        func=mdp.feet_height_body,
         weight=0.0,
         params={
-            "target_height": 0.08,
-            "std": 0.05,
-            "tanh_mult": 2.0,
+            "command_name": "base_velocity",
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
+            "target_height": -0.25,
         },
+    )
+    air_time_variance = RewTerm(
+        func=mdp.air_time_variance_penalty,
+        weight=0.0,
+        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot")},
     )
     feet_edge = RewTerm(
         func=mdp.feet_edge_penalty,
@@ -534,8 +548,11 @@ class TerminationsCfg:
 @configclass
 class CurriculumCfg:
     """Curriculum terms for the MDP."""
+    # terrain_levels = CurrTerm(
+    #     func=mdp.terrain_levels_pos, params={"threshold": 0.2, "asset_cfg": SceneEntityCfg("robot")}
+    # )
     terrain_levels = CurrTerm(
-        func=mdp.terrain_levels_pos, params={"threshold": 0.2, "asset_cfg": SceneEntityCfg("robot")}
+        func=mdp.terrain_levels_vel
     )
 ##
 # Environment configuration

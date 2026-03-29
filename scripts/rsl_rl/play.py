@@ -9,6 +9,7 @@
 
 import argparse
 import sys
+from typing import Any
 
 from isaaclab.app import AppLauncher
 
@@ -34,6 +35,30 @@ parser.add_argument(
     help="Use the pre-trained checkpoint from Nucleus.",
 )
 parser.add_argument("--real-time", action="store_true", default=False, help="Run in real-time, if possible.")
+parser.add_argument(
+    "--print_obs",
+    action="store_true",
+    default=False,
+    help="Print observation values that are passed into the policy during play.",
+)
+parser.add_argument(
+    "--print_obs_every",
+    type=int,
+    default=1,
+    help="Print observation every N simulation steps when --print_obs is enabled.",
+)
+parser.add_argument(
+    "--print_obs_env_idx",
+    type=int,
+    default=0,
+    help="Environment index to print when observation has a batch dimension.",
+)
+parser.add_argument(
+    "--print_obs_max_elems",
+    type=int,
+    default=24,
+    help="Maximum number of elements to print per tensor field.",
+)
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -87,6 +112,73 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 import legged_lab.tasks  # noqa: F401
 
 # PLACEHOLDER: Extension template (do not remove this comment)
+
+
+def _format_tensor_preview(tensor: torch.Tensor, max_elems: int, env_idx: int) -> str:
+    """Format a compact preview string for a tensor observation."""
+    tensor_cpu = tensor.detach().to("cpu")
+    # Select one environment sample for batched observations.
+    if tensor_cpu.ndim >= 2:
+        safe_env_idx = max(0, min(env_idx, tensor_cpu.shape[0] - 1))
+        selected = tensor_cpu[safe_env_idx]
+    elif tensor_cpu.ndim == 1:
+        selected = tensor_cpu
+    else:
+        selected = tensor_cpu.reshape(-1)
+
+    flat = selected.reshape(-1)
+    numel = flat.numel()
+    shown = min(max_elems, numel)
+    values = flat[:shown].tolist()
+    return f"shape={tuple(tensor_cpu.shape)}, values[:{shown}]={values}"
+
+
+def _is_mapping_like(obj: Any) -> bool:
+    """Return True for dict-like containers (e.g., dict, TensorDict)."""
+    return hasattr(obj, "keys") and hasattr(obj, "__getitem__")
+
+
+def _collect_obs_leaf_tensors(node: Any, path: str, out: list[tuple[str, torch.Tensor]]) -> None:
+    """Recursively collect leaf tensor observations with their paths."""
+    if isinstance(node, torch.Tensor):
+        out.append((path, node))
+        return
+
+    if _is_mapping_like(node):
+        for key in list(node.keys()):
+            next_path = f"{path}.{key}" if path else str(key)
+            _collect_obs_leaf_tensors(node[key], next_path, out)
+        return
+
+    if isinstance(node, (tuple, list)):
+        for idx, value in enumerate(node):
+            next_path = f"{path}[{idx}]" if path else f"[{idx}]"
+            _collect_obs_leaf_tensors(value, next_path, out)
+        return
+
+
+def _pretty_obs_name(path: str) -> str:
+    """Create a compact observation name for printing."""
+    for prefix in ("policy.", "obs.", "observations.", "policy.obs."):
+        if path.startswith(prefix):
+            path = path[len(prefix):]
+    return path
+
+
+def _print_policy_obs(obs: Any, step: int, max_elems: int, env_idx: int) -> None:
+    """Print observation values that are fed into the policy, one term per line."""
+    prefix = f"[OBS][step={step}]"
+    leaves: list[tuple[str, torch.Tensor]] = []
+    _collect_obs_leaf_tensors(obs, "policy", leaves)
+
+    if not leaves:
+        print(f"{prefix} no tensor observation leaves found in type={type(obs).__name__}")
+        return
+
+    print(f"{prefix} observation terms ({len(leaves)}):")
+    for path, tensor in leaves:
+        obs_name = _pretty_obs_name(path)
+        print(f"{prefix} {obs_name}: {_format_tensor_preview(tensor, max_elems, env_idx)}")
 
 
 @hydra_task_config(args_cli.task, args_cli.agent)
@@ -194,6 +286,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         start_time = time.time()
         # run everything in inference mode
         with torch.inference_mode():
+            if args_cli.print_obs and timestep % max(args_cli.print_obs_every, 1) == 0:
+                _print_policy_obs(obs, timestep, args_cli.print_obs_max_elems, args_cli.print_obs_env_idx)
             # agent stepping
             actions = policy(obs)
             # env stepping
