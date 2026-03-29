@@ -67,6 +67,18 @@ class PoseVelocityCommandCfg(CommandTermCfg):
     target_dis_threshold: float = 0.2
     """The distance threshold to the target position below which the command is set to zero. Defaults to 0.2."""
 
+    enable_soft_target_slowdown: bool = True
+    """If True, linearly reduce command magnitude near target instead of relying on hard stop only."""
+
+    target_slowdown_distance: float = 0.4
+    """Distance at which soft slowdown starts. Must be larger than target_dis_threshold."""
+
+    enable_heading_speed_gate: bool = True
+    """If True, reduce linear speed when heading error is large."""
+
+    heading_speed_gate_min: float = 0.2
+    """Lower bound for heading-based linear speed scale in [0, 1]."""
+
     disallow_reverse_target_component: bool = False
     """If True, remove linear-velocity components that point away from target direction in body frame."""
 

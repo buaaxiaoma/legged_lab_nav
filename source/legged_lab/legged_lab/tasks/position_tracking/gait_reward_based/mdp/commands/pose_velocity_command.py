@@ -296,6 +296,21 @@ class PoseVelocityCommand(CommandTerm):
             self.cfg.ranges.ang_vel_z[0],
             self.cfg.ranges.ang_vel_z[1],
         )
+
+        # Optionally slow down command magnitude as the robot approaches target.
+        if self.cfg.enable_soft_target_slowdown:
+            slowdown_distance = max(self.cfg.target_slowdown_distance, self.cfg.target_dis_threshold + 1e-3)
+            stop_to_slow = slowdown_distance - self.cfg.target_dis_threshold
+            slow_scale = torch.clamp((target_dist - self.cfg.target_dis_threshold) / (stop_to_slow + 1e-6), 0.0, 1.0)
+            self.vel_command_b[:, :2] *= slow_scale.unsqueeze(-1)
+            self.vel_command_b[:, 2] *= slow_scale
+
+        # Optionally reduce translational speed until heading is roughly aligned.
+        if self.cfg.enable_heading_speed_gate:
+            heading_scale = torch.clamp(torch.cos(self.heading_command_w), min=0.0, max=1.0)
+            heading_scale = torch.clamp(heading_scale, min=self.cfg.heading_speed_gate_min, max=1.0)
+            self.vel_command_b[:, :2] *= heading_scale.unsqueeze(-1)
+
         self.vel_command_b[:] *= (target_dist > self.cfg.target_dis_threshold).unsqueeze(-1)
         self.vel_command_b[:, :2] *= (
             (torch.norm(self.vel_command_b[:, :2], dim=1) > self.cfg.lin_vel_threshold).float().unsqueeze(-1)

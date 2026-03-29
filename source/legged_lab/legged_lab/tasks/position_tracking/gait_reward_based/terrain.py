@@ -36,7 +36,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
         ),
         "square_gaps_easy": terrain_gen.PerlinSquareGapTerrainCfg(
             proportion=0.2,
-            gap_distance_range=(0.08, 0.40),
+            gap_distance_range=(0.05, 0.40),
             gap_depth=(0.20, 0.45),
             platform_width=2.8,
             border_width=1.0,
@@ -46,7 +46,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             flat_patch_sampling={
                 "target": FlatPatchSamplingCfg(
                     num_patches=50,
-                    patch_radius=[0.05, 0.10, 0.15, 0.20],
+                    patch_radius=0.3,
                     max_height_diff=0.05,
                     x_range=(-6.0, 6.0),
                     y_range=(-6.0, 6.0),
@@ -65,7 +65,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             flat_patch_sampling={
                 "target": FlatPatchSamplingCfg(
                     num_patches=50,
-                    patch_radius=[0.05, 0.10, 0.15, 0.20],
+                    patch_radius=0.3,
                     max_height_diff=0.05,
                     x_range=(-6.0, 6.0),
                     y_range=(-6.0, 6.0),
@@ -94,7 +94,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             flat_patch_sampling={
                 "target": FlatPatchSamplingCfg(
                     num_patches=50,
-                    patch_radius=[0.05, 0.10, 0.15, 0.20],
+                    patch_radius=[0.15, 0.20],
                     max_height_diff=0.05,
                     y_range=(-6.0, 6.0),
                     x_range=(-1.0, 1.0),
@@ -123,7 +123,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             flat_patch_sampling={
                 "target": FlatPatchSamplingCfg(
                     num_patches=50,
-                    patch_radius=[0.05, 0.10, 0.15, 0.20],
+                    patch_radius=[0.15, 0.20],
                     max_height_diff=0.05,
                     y_range=(-6.0, 6.0),
                     x_range=(-1.0, 1.0),
@@ -150,7 +150,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             flat_patch_sampling={
                 "target": FlatPatchSamplingCfg(
                     num_patches=50,
-                    patch_radius=[0.05, 0.10, 0.15, 0.20],
+                    patch_radius=0.25,
                     max_height_diff=0.05,
                     y_range=(-6.0, 6.0),
                     x_range=(-1.0, 1.0),
@@ -177,7 +177,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             flat_patch_sampling={
                 "target": FlatPatchSamplingCfg(
                     num_patches=50,
-                    patch_radius=[0.05, 0.10, 0.15, 0.20],
+                    patch_radius=0.25,
                     max_height_diff=0.05,
                     y_range=(-6.0, 6.0),
                     x_range=(-1.0, 1.0),
