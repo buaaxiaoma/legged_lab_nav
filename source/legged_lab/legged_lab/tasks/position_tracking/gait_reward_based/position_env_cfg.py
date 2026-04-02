@@ -422,7 +422,6 @@ class RewardsCfg:
     track_ang_vel_z_exp = RewTerm(
         func=mdp.track_ang_vel_z_exp, weight=2.0, params={"command_name": "base_velocity", "std": 0.5}
     )
-    heading_error = RewTerm(func=mdp.heading_error, weight=0.0, params={"command_name": "base_velocity"})
     stand_still = RewTerm(func=mdp.stand_still, weight=0.0, params={"command_name": "base_velocity"})
     stalling_penalty = RewTerm(
         func=mdp.stalling_penalty,
@@ -455,7 +454,11 @@ class RewardsCfg:
         weight=0.0,
         params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*"), "soft_ratio": 1.0},
     )
-
+    joint_deviation = RewTerm(
+        func=mdp.joint_deviation_l1,
+        weight=-0.1,
+        params={"asset_cfg": SceneEntityCfg("robot")},
+    )
     # Action penalties
     applied_torque_limits = RewTerm(
         func=mdp.applied_torque_limits,
@@ -537,7 +540,7 @@ class TerminationsCfg:
         params={"asset_cfg": SceneEntityCfg("robot"), "distance_buffer": 3.0},
         time_out=True,
     )
-    bad_orientation = DoneTerm(func=mdp.bad_orientation, params={"limit_angle": 0.5})
+    bad_orientation = DoneTerm(func=mdp.bad_orientation, params={"limit_angle": 0.7})
     # Contact sensor
     illegal_contact = DoneTerm(
         func=mdp.illegal_contact,

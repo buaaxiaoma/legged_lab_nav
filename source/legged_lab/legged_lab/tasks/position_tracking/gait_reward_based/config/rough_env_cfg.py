@@ -38,8 +38,8 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.commands.base_velocity.only_positive_lin_vel_x = True
         self.commands.base_velocity.lin_vel_threshold = 0.1
         self.commands.base_velocity.ang_vel_threshold = 0.1
-        self.commands.base_velocity.target_dis_threshold = 0.2
-        self.commands.base_velocity.target_slowdown_distance = 0.5
+        self.commands.base_velocity.target_dis_threshold = 0.15
+        self.commands.base_velocity.target_slowdown_distance = 0.4
         self.commands.base_velocity.enable_soft_target_slowdown = True
         self.commands.base_velocity.enable_heading_speed_gate = True
         self.commands.base_velocity.heading_speed_gate_min = 0.25
@@ -79,16 +79,21 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.flat_orientation_l2.weight = -0.5
         
         # Task
-        self.rewards.track_lin_vel_xy_exp.weight = 2.0
-        self.rewards.track_ang_vel_z_exp.weight = 2.0
-        self.rewards.stand_still.weight = -0.5
-
+        self.rewards.track_lin_vel_xy_exp.weight = 3.0
+        self.rewards.track_ang_vel_z_exp.weight = 3.0
+        self.rewards.stand_still.weight = -1.0
+        self.rewards.stand_still.params["threshold"] = 0.15
+        self.rewards.stalling_penalty.weight = -1.0
+        self.rewards.stalling_penalty.params["vel_threshold"] = 0.1
+        self.rewards.stalling_penalty.params["distance_threshold"] = 0.25
+        
         # Joint penalties
         self.rewards.joint_torques_l2.weight = -1e-5
         self.rewards.joint_vel_l2.weight = -1e-4
         self.rewards.joint_acc_l2.weight = -2e-7
         self.rewards.joint_pos_limits.weight = -10.0
         self.rewards.joint_vel_limits.weight = -1.0
+        self.rewards.joint_deviation.weight = -0.05
         self.rewards.action_rate_l2.weight = -0.01
         # Action penalties
         self.rewards.applied_torque_limits.weight = -0.2
@@ -105,12 +110,9 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.feet_air_time.weight = 0.1
         self.rewards.feet_air_time.params["threshold"] = 0.5
         self.rewards.feet_air_time.params["sensor_cfg"].body_names = [self.foot_link_name]
-        self.rewards.feet_height.weight = 0.0
-        self.rewards.feet_height.params["asset_cfg"].body_names = [self.foot_link_name]
         self.rewards.air_time_variance.weight = -0.2
         self.rewards.air_time_variance.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_stumble.weight = -1.0
-        self.rewards.feet_edge.weight = 0.0
 
         # If the weight of rewards is 0, set rewards to None
         if self.__class__.__name__ == "UnitreeGo2RoughEnvCfg":

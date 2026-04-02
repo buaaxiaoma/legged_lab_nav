@@ -42,12 +42,15 @@ def task_reward(env: ManagerBasedRLEnv, command_name: str, Tr: float = 1.0) -> t
     return reward
 
 
-def stalling_penalty(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
+def stalling_penalty(env: ManagerBasedRLEnv, command_name: str, 
+                     vel_threshold: float = 0.1, distance_threshold: float = 0.25) -> torch.Tensor:
     """Compute the stalling penalty based on the robot's velocity.
 
     Args:
         env (ManagerBasedRLEnv): The environment instance.
         command_name (str): The name of the command to retrieve target positions.
+        vel_threshold (float): The threshold for considering the robot as stalling.
+        distance_threshold (float): The threshold for the distance to the target.
 
     Returns:
         torch.Tensor: The computed penalty tensor of shape (num_envs,).
@@ -57,7 +60,7 @@ def stalling_penalty(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     distance = torch.norm(command.robot_pos_w - command.target_pos_w, dim=-1)  # (num_envs,)
 
     # Condition for when to apply the reward
-    condition = (speed < 0.1) & (distance > 0.25)
+    condition = (speed < vel_threshold) & (distance > distance_threshold)
     
     # Calculate reward using torch.where for vectorized operation
     reward = torch.where(condition, 1.0, 0.0)
