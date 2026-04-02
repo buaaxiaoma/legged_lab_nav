@@ -537,7 +537,7 @@ class TerminationsCfg:
         params={"asset_cfg": SceneEntityCfg("robot"), "distance_buffer": 3.0},
         time_out=True,
     )
-    bad_orientation = DoneTerm(func=mdp.bad_orientation, params={"threshold": 0.5})
+    bad_orientation = DoneTerm(func=mdp.bad_orientation, params={"limit_angle": 0.5})
     # Contact sensor
     illegal_contact = DoneTerm(
         func=mdp.illegal_contact,

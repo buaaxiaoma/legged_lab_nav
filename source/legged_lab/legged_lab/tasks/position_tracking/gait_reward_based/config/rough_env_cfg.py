@@ -14,14 +14,6 @@ from legged_lab.assets.unitree import UNITREE_GO2_CFG  # isort: skip
 class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
     base_link_name = "base"
     foot_link_name = ".*_foot"
-    # fmt: off
-    joint_names = [
-        "FR_hip_joint", "FR_thigh_joint", "FR_calf_joint",
-        "FL_hip_joint", "FL_thigh_joint", "FL_calf_joint",
-        "RR_hip_joint", "RR_thigh_joint", "RR_calf_joint",
-        "RL_hip_joint", "RL_thigh_joint", "RL_calf_joint",
-    ]
-    # fmt: on
 
     def __post_init__(self):
         # post init of parent
@@ -36,8 +28,6 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.observations.policy.joint_pos.scale = 1.0
         self.observations.policy.joint_vel.scale = 0.05
         # self.observations.policy.height_scan = None
-        self.observations.policy.joint_pos.params["asset_cfg"].joint_names = self.joint_names
-        self.observations.policy.joint_vel.params["asset_cfg"].joint_names = self.joint_names
 
         # ------------------------------Commands------------------------------
         # Smooth command changes and avoid near-zero command jitter.
@@ -48,7 +38,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.commands.base_velocity.only_positive_lin_vel_x = True
         self.commands.base_velocity.lin_vel_threshold = 0.1
         self.commands.base_velocity.ang_vel_threshold = 0.1
-        self.commands.base_velocity.target_dis_threshold = 0.25
+        self.commands.base_velocity.target_dis_threshold = 0.2
         self.commands.base_velocity.target_slowdown_distance = 0.5
         self.commands.base_velocity.enable_soft_target_slowdown = True
         self.commands.base_velocity.enable_heading_speed_gate = True
@@ -62,7 +52,6 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         # reduce action scale
         self.actions.joint_pos.scale = {".*_hip_joint": 0.125, "^(?!.*_hip_joint).*": 0.25}
         self.actions.joint_pos.clip = {".*": (-100.0, 100.0)}
-        self.actions.joint_pos.joint_names = self.joint_names
 
         # ------------------------------Events------------------------------
         self.events.randomize_reset_base.params = {
@@ -92,7 +81,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         # Task
         self.rewards.track_lin_vel_xy_exp.weight = 2.0
         self.rewards.track_ang_vel_z_exp.weight = 2.0
-        self.rewards.stand_still.weight = -0.3
+        self.rewards.stand_still.weight = -0.5
 
         # Joint penalties
         self.rewards.joint_torques_l2.weight = -1e-5
@@ -118,7 +107,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.feet_air_time.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_height.weight = 0.0
         self.rewards.feet_height.params["asset_cfg"].body_names = [self.foot_link_name]
-        self.rewards.air_time_variance.weight = 0.0
+        self.rewards.air_time_variance.weight = -0.2
         self.rewards.air_time_variance.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_stumble.weight = -1.0
         self.rewards.feet_edge.weight = 0.0
