@@ -10,7 +10,7 @@ from legged_lab.tasks.position_tracking.amp_based.mdp.symmetry import go2
 @configclass
 class Go2RoughPPORunnerAmpCfg(RslRlOnPolicyRunnerCfg):
     class_name = "AMPRunner"
-    num_steps_per_env = 48
+    num_steps_per_env = 24
     max_iterations = 50000
     save_interval = 500
     experiment_name = "go2_amp_rough"
@@ -50,7 +50,7 @@ class Go2RoughPPORunnerAmpCfg(RslRlOnPolicyRunnerCfg):
         learning_rate=1.0e-4,
         schedule="adaptive",
         gamma=0.99,
-        lam=1.0,
+        lam=0.95,
         desired_kl=0.01,
         max_grad_norm=1.0,
         amp_cfg=RslRlAmpCfg(
@@ -73,15 +73,3 @@ class Go2RoughPPORunnerAmpCfg(RslRlOnPolicyRunnerCfg):
             use_mirror_loss=True, mirror_loss_coeff=0.1,
         )
     )
-
-@configclass
-class Go2PitPPORunnerAmpCfg(Go2RoughPPORunnerAmpCfg):
-    def __post_init__(self):
-        super().__post_init__()
-        self.experiment_name = "go2_amp_pit"
-        
-@configclass
-class Go2GapPPORunnerAmpCfg(Go2RoughPPORunnerAmpCfg):
-    def __post_init__(self):
-        super().__post_init__()
-        self.experiment_name = "go2_amp_gap"

@@ -255,6 +255,7 @@ class PoseVelocityCommand(CommandTerm):
         self.heading_command_w = wrap_to_pi(target_direction - self.robot.data.heading_w)
 
         self.vel_command_b[:, 2] = self.heading_command_w * self.cfg.heading_control_stiffness
+        self.vel_command_b[:, 2] *= torch.clamp((target_dist - 0.1) / 0.3, min=0.0, max=1.0)
 
         # scale linear velocity so the dominant axis hits its limit and
         # the other axis preserves its ratio

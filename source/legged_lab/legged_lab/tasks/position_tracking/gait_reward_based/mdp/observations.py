@@ -8,6 +8,7 @@ from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.sensors import RayCaster
 from isaaclab.envs.mdp import ManagerTermBase
 from typing import TYPE_CHECKING
+from legged_lab.tasks.position_tracking.gait_reward_based.mdp.commands import *
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
@@ -18,6 +19,11 @@ if TYPE_CHECKING:
 #         env.episode_length_buf = torch.zeros(env.num_envs, device=env.device, dtype=torch.long)
 #     remaining_time = 1.0 - (env.episode_length_buf[:, None] * env.step_dt) / env.max_episode_length
 #     return remaining_time
+
+def target_pos(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
+    "Target position relative to the robot's base in world frame, shape (N, 2)."
+    command: PoseVelocityCommand = env.command_manager.get_term(command_name)
+    return command.pose_command
 
 class HeightScanRand(ManagerTermBase):
     

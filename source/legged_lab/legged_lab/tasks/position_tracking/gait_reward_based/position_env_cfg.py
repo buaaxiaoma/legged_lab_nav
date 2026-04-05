@@ -192,6 +192,13 @@ class ObservationsCfg:
             clip=(-100.0, 100.0),
             scale=1.0,
         )
+        target_pos = ObsTerm(
+            func=mdp.target_pos,
+            params={"command_name": "base_velocity"},
+            noise=None,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
         joint_pos = ObsTerm(
             func=mdp.joint_pos_rel,
             params={"asset_cfg": SceneEntityCfg("robot", joint_names=".*", preserve_order=True)},
@@ -254,6 +261,13 @@ class ObservationsCfg:
         )
         velocity_commands = ObsTerm(
             func=mdp.generated_commands,
+            params={"command_name": "base_velocity"},
+            noise=None,
+            clip=(-100.0, 100.0),
+            scale=1.0,
+        )
+        target_pos = ObsTerm(
+            func=mdp.target_pos,
             params={"command_name": "base_velocity"},
             noise=None,
             clip=(-100.0, 100.0),
@@ -355,8 +369,8 @@ class EventCfg:
     #     mode="reset",
     #     params={
     #         "asset_cfg": SceneEntityCfg("robot", body_names=""),
-    #         "force_range": (-10.0, 10.0),
-    #         "torque_range": (-10.0, 10.0),
+    #         "force_range": (-5.0, 5.0),
+    #         "torque_range": (-5.0, 5.0),
     #     },
     # )
 
@@ -587,7 +601,7 @@ class LocomotionPositionEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
         self.sim.physics_material = self.scene.terrain.physics_material
-        self.sim.physx.gpu_max_rigid_patch_count = 10 * 2**15
+        self.sim.physx.gpu_max_rigid_patch_count = 32 * 2**15
         # update sensor update periods
         # we tick all the sensors based on the smallest update period (physics update period)
         if self.scene.height_scanner is not None:

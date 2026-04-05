@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import torch
 from tensordict import TensorDict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
@@ -19,32 +19,26 @@ if TYPE_CHECKING:
 __all__ = ["compute_symmetric_states"]
 
 # Observation layout metadata derived from position_env_cfg.
-_HEIGHT_SCAN_ROWS = 11
-_HEIGHT_SCAN_COLS = 31
+_HEIGHT_SCAN_ROWS = 17
+_HEIGHT_SCAN_COLS = 11
 _HEIGHT_SCAN_SIZE = _HEIGHT_SCAN_ROWS * _HEIGHT_SCAN_COLS
-_KEY_BODY_NUM = 4
-_KEY_BODY_POS_DIM = 3 * _KEY_BODY_NUM
 
 _POLICY_BASE_ANG_VEL = slice(0, 3)
 _POLICY_PROJECTED_GRAVITY = slice(3, 6)
-_POLICY_POSITION_COMMANDS = slice(6, 10)
-_POLICY_REMAINING_TIME = slice(10, 11)
-_POLICY_JOINT_POS = slice(11, 23)
-_POLICY_JOINT_VEL = slice(23, 35)
-_POLICY_ACTIONS = slice(35, 47)
-_POLICY_HEIGHT_SCAN = slice(47, 47 + _HEIGHT_SCAN_SIZE)
+_POLICY_VELOCITY_COMMANDS = slice(6, 9)
+_POLICY_JOINT_POS = slice(9, 21)
+_POLICY_JOINT_VEL = slice(21, 33)
+_POLICY_ACTIONS = slice(33, 45)
+_POLICY_HEIGHT_SCAN = slice(45, 45 + _HEIGHT_SCAN_SIZE)
 
 _CRITIC_BASE_LIN_VEL = slice(0, 3)
 _CRITIC_BASE_ANG_VEL = slice(3, 6)
 _CRITIC_PROJECTED_GRAVITY = slice(6, 9)
-_CRITIC_POSITION_COMMANDS = slice(9, 13)
-_CRITIC_REMAINING_TIME = slice(13, 14)
-_CRITIC_JOINT_POS = slice(14, 26)
-_CRITIC_JOINT_VEL = slice(26, 38)
-_CRITIC_ACTIONS = slice(38, 50)
-_CRITIC_HEIGHT_SCAN = slice(50, 50 + _HEIGHT_SCAN_SIZE)
-_CRITIC_KEY_BODY_POS_B = slice(50 + _HEIGHT_SCAN_SIZE, 50 + _HEIGHT_SCAN_SIZE + _KEY_BODY_POS_DIM)
-
+_CRITIC_VELOCITY_COMMANDS = slice(9, 12)
+_CRITIC_JOINT_POS = slice(12, 24)
+_CRITIC_JOINT_VEL = slice(24, 36)
+_CRITIC_ACTIONS = slice(36, 48)
+_CRITIC_HEIGHT_SCAN = slice(48, 48 + _HEIGHT_SCAN_SIZE)
 @torch.no_grad()
 def compute_symmetric_states(
     env: ManagerBasedRLEnv,
@@ -130,101 +124,67 @@ Symmetry functions for observations.
 """
 
 
-def _transform_policy_obs_left_right(env: ManagerBasedRLEnv, obs: torch.Tensor) -> torch.Tensor:
+def _transform_policy_obs_left_right(env: ManagerBasedRLEnv, obs: Any) -> Any:
     """Apply a left-right symmetry transformation to the policy observation tensor."""
+    # Term-wise TensorDict path (used when concatenate_terms=False).
+    if isinstance(obs, TensorDict) or (hasattr(obs, "keys") and hasattr(obs, "__getitem__")):
+        obs = obs.clone()
+        device = obs["base_ang_vel"].device
+        obs["base_ang_vel"] = obs["base_ang_vel"] * torch.tensor([-1, 1, -1], device=device)
+        obs["projected_gravity"] = obs["projected_gravity"] * torch.tensor([1, -1, 1], device=device)
+        obs["velocity_commands"] = obs["velocity_commands"] * torch.tensor([1, -1, -1], device=device)
+        obs["joint_pos"] = _switch_go2_joints_left_right(obs["joint_pos"])
+        obs["joint_vel"] = _switch_go2_joints_left_right(obs["joint_vel"])
+        obs["actions"] = _switch_go2_joints_left_right(obs["actions"])
+        if "height_scan" in obs.keys():
+            obs["height_scan"] = obs["height_scan"].flip(dims=[2])
+        return obs
+
+    # Flat tensor fallback path.
     obs = obs.clone()
     device = obs.device
     obs[:, _POLICY_BASE_ANG_VEL] *= torch.tensor([-1, 1, -1], device=device)
     obs[:, _POLICY_PROJECTED_GRAVITY] *= torch.tensor([1, -1, 1], device=device)
-    obs[:, _POLICY_POSITION_COMMANDS] *= torch.tensor([1, -1, 1, -1], device=device)
+    obs[:, _POLICY_VELOCITY_COMMANDS] *= torch.tensor([1, -1, -1], device=device)
     obs[:, _POLICY_JOINT_POS] = _switch_go2_joints_left_right(obs[:, _POLICY_JOINT_POS])
     obs[:, _POLICY_JOINT_VEL] = _switch_go2_joints_left_right(obs[:, _POLICY_JOINT_VEL])
     obs[:, _POLICY_ACTIONS] = _switch_go2_joints_left_right(obs[:, _POLICY_ACTIONS])
-
-    if "height_scan" in env.observation_manager.active_terms.get("policy", {}):
-        obs[:, _POLICY_HEIGHT_SCAN] = (
-            obs[:, _POLICY_HEIGHT_SCAN]
-            .view(-1, _HEIGHT_SCAN_ROWS, _HEIGHT_SCAN_COLS)
-            .flip(dims=[1])
-            .view(-1, _HEIGHT_SCAN_SIZE)
-        )
-
+    obs[:, _POLICY_HEIGHT_SCAN] = (
+        obs[:, _POLICY_HEIGHT_SCAN].view(-1, _HEIGHT_SCAN_ROWS, _HEIGHT_SCAN_COLS).flip(dims=[2]).view(-1, _HEIGHT_SCAN_SIZE)
+    )
     return obs
 
 
-def _transform_policy_obs_front_back(env: ManagerBasedRLEnv, obs: torch.Tensor) -> torch.Tensor:
-    """Apply a front-back symmetry transformation to the policy observation tensor."""
-    obs = obs.clone()
-    device = obs.device
-    obs[:, _POLICY_BASE_ANG_VEL] *= torch.tensor([1, -1, -1], device=device)
-    obs[:, _POLICY_PROJECTED_GRAVITY] *= torch.tensor([-1, 1, 1], device=device)
-    obs[:, _POLICY_POSITION_COMMANDS] *= torch.tensor([-1, 1, -1], device=device)
-    obs[:, _POLICY_JOINT_POS] = _switch_go2_joints_front_back(obs[:, _POLICY_JOINT_POS])
-    obs[:, _POLICY_JOINT_VEL] = _switch_go2_joints_front_back(obs[:, _POLICY_JOINT_VEL])
-    obs[:, _POLICY_ACTIONS] = _switch_go2_joints_front_back(obs[:, _POLICY_ACTIONS])
-
-    if "height_scan" in env.observation_manager.active_terms.get("policy", {}):
-        obs[:, _POLICY_HEIGHT_SCAN] = (
-            obs[:, _POLICY_HEIGHT_SCAN]
-            .view(-1, _HEIGHT_SCAN_ROWS, _HEIGHT_SCAN_COLS)
-            .flip(dims=[2])
-            .view(-1, _HEIGHT_SCAN_SIZE)
-        )
-
-    return obs
-
-
-def _transform_critic_obs_left_right(env: ManagerBasedRLEnv, obs: torch.Tensor) -> torch.Tensor:
+def _transform_critic_obs_left_right(env: ManagerBasedRLEnv, obs: Any) -> Any:
     """Apply a left-right symmetry transformation to the critic observation tensor."""
+    # Term-wise TensorDict path (used when concatenate_terms=False).
+    if isinstance(obs, TensorDict) or (hasattr(obs, "keys") and hasattr(obs, "__getitem__")):
+        obs = obs.clone()
+        device = obs["base_ang_vel"].device
+        obs["base_lin_vel"] = obs["base_lin_vel"] * torch.tensor([1, -1, 1], device=device)
+        obs["base_ang_vel"] = obs["base_ang_vel"] * torch.tensor([-1, 1, -1], device=device)
+        obs["projected_gravity"] = obs["projected_gravity"] * torch.tensor([1, -1, 1], device=device)
+        obs["velocity_commands"] = obs["velocity_commands"] * torch.tensor([1, -1, -1], device=device)
+        obs["joint_pos"] = _switch_go2_joints_left_right(obs["joint_pos"])
+        obs["joint_vel"] = _switch_go2_joints_left_right(obs["joint_vel"])
+        obs["actions"] = _switch_go2_joints_left_right(obs["actions"])
+        if "height_scan" in obs.keys():
+            obs["height_scan"] = obs["height_scan"].flip(dims=[2])
+        return obs
+
+    # Flat tensor fallback path.
     obs = obs.clone()
     device = obs.device
     obs[:, _CRITIC_BASE_LIN_VEL] *= torch.tensor([1, -1, 1], device=device)
     obs[:, _CRITIC_BASE_ANG_VEL] *= torch.tensor([-1, 1, -1], device=device)
     obs[:, _CRITIC_PROJECTED_GRAVITY] *= torch.tensor([1, -1, 1], device=device)
-    obs[:, _CRITIC_POSITION_COMMANDS] *= torch.tensor([1, -1, 1, -1], device=device)
+    obs[:, _CRITIC_VELOCITY_COMMANDS] *= torch.tensor([1, -1, -1], device=device)
     obs[:, _CRITIC_JOINT_POS] = _switch_go2_joints_left_right(obs[:, _CRITIC_JOINT_POS])
     obs[:, _CRITIC_JOINT_VEL] = _switch_go2_joints_left_right(obs[:, _CRITIC_JOINT_VEL])
     obs[:, _CRITIC_ACTIONS] = _switch_go2_joints_left_right(obs[:, _CRITIC_ACTIONS])
-
-    # key-body positions in base frame
-    if "key_body_pos_b" in env.observation_manager.active_terms.get("critic", {}):
-        obs[:, _CRITIC_KEY_BODY_POS_B] = _switch_go2_key_body_pos_left_right(obs[:, _CRITIC_KEY_BODY_POS_B])
-
-    if "height_scan" in env.observation_manager.active_terms.get("critic", {}):
-        obs[:, _CRITIC_HEIGHT_SCAN] = (
-            obs[:, _CRITIC_HEIGHT_SCAN]
-            .view(-1, _HEIGHT_SCAN_ROWS, _HEIGHT_SCAN_COLS)
-            .flip(dims=[1])
-            .view(-1, _HEIGHT_SCAN_SIZE)
-        )
-
-    return obs
-
-
-def _transform_critic_obs_front_back(env: ManagerBasedRLEnv, obs: torch.Tensor) -> torch.Tensor:
-    """Apply a front-back symmetry transformation to the critic observation tensor."""
-    obs = obs.clone()
-    device = obs.device
-    obs[:, _CRITIC_BASE_LIN_VEL] *= torch.tensor([-1, 1, 1], device=device)
-    obs[:, _CRITIC_BASE_ANG_VEL] *= torch.tensor([1, -1, -1], device=device)
-    obs[:, _CRITIC_PROJECTED_GRAVITY] *= torch.tensor([-1, 1, 1], device=device)
-    obs[:, _CRITIC_POSITION_COMMANDS] *= torch.tensor([-1, 1, -1], device=device)
-    obs[:, _CRITIC_JOINT_POS] = _switch_go2_joints_front_back(obs[:, _CRITIC_JOINT_POS])
-    obs[:, _CRITIC_JOINT_VEL] = _switch_go2_joints_front_back(obs[:, _CRITIC_JOINT_VEL])
-    obs[:, _CRITIC_ACTIONS] = _switch_go2_joints_front_back(obs[:, _CRITIC_ACTIONS])
-
-    # key-body positions in base frame
-    if "key_body_pos_b" in env.observation_manager.active_terms.get("critic", {}):
-        obs[:, _CRITIC_KEY_BODY_POS_B] = _switch_go2_key_body_pos_front_back(obs[:, _CRITIC_KEY_BODY_POS_B])
-
-    if "height_scan" in env.observation_manager.active_terms.get("critic", {}):
-        obs[:, _CRITIC_HEIGHT_SCAN] = (
-            obs[:, _CRITIC_HEIGHT_SCAN]
-            .view(-1, _HEIGHT_SCAN_ROWS, _HEIGHT_SCAN_COLS)
-            .flip(dims=[2])
-            .view(-1, _HEIGHT_SCAN_SIZE)
-        )
-
+    obs[:, _CRITIC_HEIGHT_SCAN] = (
+        obs[:, _CRITIC_HEIGHT_SCAN].view(-1, _HEIGHT_SCAN_ROWS, _HEIGHT_SCAN_COLS).flip(dims=[2]).view(-1, _HEIGHT_SCAN_SIZE)
+    )
     return obs
 
 
@@ -251,24 +211,6 @@ def _transform_actions_left_right(actions: torch.Tensor) -> torch.Tensor:
     actions[:] = _switch_go2_joints_left_right(actions[:])
     return actions
 
-
-def _transform_actions_front_back(actions: torch.Tensor) -> torch.Tensor:
-    """Applies a front-back symmetry transformation to the actions tensor.
-
-    This function modifies the given actions tensor by applying transformations
-    that represent a symmetry with respect to the front-back axis. This includes
-    flipping the joint positions, joint velocities, and last actions for the
-    go2 robot.
-
-    Args:
-        actions: The actions tensor to be transformed.
-
-    Returns:
-        The transformed actions tensor with front-back symmetry applied.
-    """
-    actions = actions.clone()
-    actions[:] = _switch_go2_joints_front_back(actions[:])
-    return actions
 
 
 """
@@ -304,55 +246,4 @@ def _switch_go2_joints_left_right(joint_data: torch.Tensor) -> torch.Tensor:
     return joint_data_switched
 
 
-def _switch_go2_joints_front_back(joint_data: torch.Tensor) -> torch.Tensor:
-    """Applies a front-back symmetry transformation to the joint data tensor."""
-    joint_data_switched = torch.zeros_like(joint_data)
-    # front <-- hind
-    joint_data_switched[..., [0, 4, 8, 2, 6, 10]] = joint_data[..., [1, 5, 9, 3, 7, 11]]
-    # hind <-- front
-    joint_data_switched[..., [1, 5, 9, 3, 7, 11]] = joint_data[..., [0, 4, 8, 2, 6, 10]]
 
-    # Flip the sign of the HFE and KFE joints
-    joint_data_switched[..., 4:] *= -1
-
-    return joint_data_switched
-
-
-def _switch_go2_key_body_pos_left_right(key_body_pos: torch.Tensor) -> torch.Tensor:
-    """Left-right symmetry for key-body positions in base frame.
-
-    Expected key-body order: [FL, FR, RL, RR], each is (x,y,z) concatenated.
-    """
-    pos = key_body_pos.view(*key_body_pos.shape[:-1], _KEY_BODY_NUM, 3).clone()
-
-    # swap right <-> left: FR <-> FL, RR <-> RL
-    pos_switched = pos.clone()
-    pos_switched[..., 0, :] = pos[..., 1, :]
-    pos_switched[..., 1, :] = pos[..., 0, :]
-    pos_switched[..., 2, :] = pos[..., 3, :]
-    pos_switched[..., 3, :] = pos[..., 2, :]
-
-    # reflect y
-    pos_switched[..., 1] *= -1.0
-
-    return pos_switched.reshape(*key_body_pos.shape)
-
-
-def _switch_go2_key_body_pos_front_back(key_body_pos: torch.Tensor) -> torch.Tensor:
-    """Front-back symmetry for key-body positions in base frame.
-
-    Expected key-body order: [FL, FR, RL, RR], each is (x,y,z) concatenated.
-    """
-    pos = key_body_pos.view(*key_body_pos.shape[:-1], _KEY_BODY_NUM, 3).clone()
-
-    # swap front <-> rear: FR <-> RR, FL <-> RL
-    pos_switched = pos.clone()
-    pos_switched[..., 0, :] = pos[..., 2, :]
-    pos_switched[..., 2, :] = pos[..., 0, :]
-    pos_switched[..., 1, :] = pos[..., 3, :]
-    pos_switched[..., 3, :] = pos[..., 1, :]
-
-    # reflect x
-    pos_switched[..., 0] *= -1.0
-
-    return pos_switched.reshape(*key_body_pos.shape)

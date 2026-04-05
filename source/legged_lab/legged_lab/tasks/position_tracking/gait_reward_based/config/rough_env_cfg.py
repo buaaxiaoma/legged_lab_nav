@@ -36,16 +36,16 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.commands.base_velocity.heading_control_stiffness = 1.5
         self.commands.base_velocity.rel_standing_envs = 0.0
         self.commands.base_velocity.only_positive_lin_vel_x = True
-        self.commands.base_velocity.lin_vel_threshold = 0.1
-        self.commands.base_velocity.ang_vel_threshold = 0.1
-        self.commands.base_velocity.target_dis_threshold = 0.15
+        self.commands.base_velocity.lin_vel_threshold = 0.0
+        self.commands.base_velocity.ang_vel_threshold = 0.0
+        self.commands.base_velocity.target_dis_threshold = 0.2
         self.commands.base_velocity.target_slowdown_distance = 0.4
-        self.commands.base_velocity.enable_soft_target_slowdown = True
+        self.commands.base_velocity.enable_soft_target_slowdown = False
         self.commands.base_velocity.enable_heading_speed_gate = True
         self.commands.base_velocity.heading_speed_gate_min = 0.25
         self.commands.base_velocity.disallow_reverse_target_component = True
-        self.commands.base_velocity.max_linear_cmd_step = 0.05
-        self.commands.base_velocity.max_angular_cmd_step = 0.08
+        self.commands.base_velocity.max_linear_cmd_step = 0.0
+        self.commands.base_velocity.max_angular_cmd_step = 0.0
         self.commands.base_velocity.command_smoothing_factor = 0.4
 
         # ------------------------------Actions------------------------------
@@ -65,7 +65,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.events.randomize_rigid_body_mass_others.params["asset_cfg"].body_names = [
             f"^(?!.*{self.base_link_name}).*"
         ]
-        self.events.randomize_com_positions.params["asset_cfg"].body_names = [self.base_link_name, "Head_.*"]
+        self.events.randomize_com_positions.params["asset_cfg"].body_names = [self.base_link_name]
         #start after certain steps
         # self.events.randomize_apply_external_force_torque.params["asset_cfg"].body_names = [self.base_link_name]
 
@@ -81,11 +81,11 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         # Task
         self.rewards.track_lin_vel_xy_exp.weight = 3.0
         self.rewards.track_ang_vel_z_exp.weight = 3.0
-        self.rewards.stand_still.weight = -1.0
-        self.rewards.stand_still.params["threshold"] = 0.15
+        self.rewards.stand_still.weight = -3.0
+        self.rewards.stand_still.params["threshold"] = 0.1
         self.rewards.stalling_penalty.weight = -1.0
         self.rewards.stalling_penalty.params["vel_threshold"] = 0.1
-        self.rewards.stalling_penalty.params["distance_threshold"] = 0.25
+        self.rewards.stalling_penalty.params["distance_threshold"] = 0.3
         
         # Joint penalties
         self.rewards.joint_torques_l2.weight = -1e-5
@@ -104,13 +104,13 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.undesired_contacts.params["threshold"] = 1.0
         
         # Others
-        self.rewards.feet_slide.weight = -1.0
+        self.rewards.feet_slide.weight = -0.2
         self.rewards.feet_slide.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_slide.params["asset_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_air_time.weight = 0.1
-        self.rewards.feet_air_time.params["threshold"] = 0.5
+        self.rewards.feet_air_time.params["threshold"] = 0.3
         self.rewards.feet_air_time.params["sensor_cfg"].body_names = [self.foot_link_name]
-        self.rewards.air_time_variance.weight = -0.2
+        self.rewards.air_time_variance.weight = -2.0
         self.rewards.air_time_variance.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_stumble.weight = -1.0
 
