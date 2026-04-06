@@ -41,7 +41,11 @@ class MotionDataTerm(ManagerTermBase):
         if not motion_files:
             raise ValueError(f"No motion data files with .pkl extension found in {self.cfg.motion_data_dir}.")
 
-        self.motion_weights_dict = self.cfg.motion_data_weights
+        # If motion weights are missing or empty, load all available .pkl files with equal weight.
+        if not getattr(self.cfg, "motion_data_weights", None):
+            self.motion_weights_dict = {os.path.splitext(f)[0]: 1.0 for f in sorted(motion_files)}
+        else:
+            self.motion_weights_dict = self.cfg.motion_data_weights
 
         self.motion_durations = []
         self.motion_fps = []

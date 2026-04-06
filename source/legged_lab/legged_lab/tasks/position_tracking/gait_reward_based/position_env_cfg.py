@@ -436,7 +436,7 @@ class RewardsCfg:
     track_ang_vel_z_exp = RewTerm(
         func=mdp.track_ang_vel_z_exp, weight=2.0, params={"command_name": "base_velocity", "std": 0.5}
     )
-    stand_still = RewTerm(func=mdp.stand_still, weight=0.0, params={"command_name": "base_velocity"})
+    stand_still = RewTerm(func=mdp.stand_still_joint_deviation_l1, weight=0.0, params={"command_name": "base_velocity"})
     stalling_penalty = RewTerm(
         func=mdp.stalling_penalty,
         weight=0.0,

@@ -114,9 +114,9 @@ class PoseVelocityCommandCfg(CommandTermCfg):
     goal_vel_visualizer_cfg: VisualizationMarkersCfg = GREEN_ARROW_X_MARKER_CFG.replace(
         prim_path="/Visuals/Command/velocity_goal"
     )
-    """The configuration for the goal velocity visualization marker. Defaults to GREEN_ARROW_X_MARKER_CFG."""
+    """The configuration for the goal velocity visualization marker."""
 
     current_vel_visualizer_cfg: VisualizationMarkersCfg = BLUE_ARROW_X_MARKER_CFG.replace(
         prim_path="/Visuals/Command/velocity_current"
     )
-    """The configuration for the current velocity visualization marker. Defaults to BLUE_ARROW_X_MARKER_CFG."""
+    """The configuration for the current velocity visualization marker."""

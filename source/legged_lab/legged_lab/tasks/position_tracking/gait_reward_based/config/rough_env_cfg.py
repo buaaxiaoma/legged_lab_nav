@@ -81,8 +81,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         # Task
         self.rewards.track_lin_vel_xy_exp.weight = 3.0
         self.rewards.track_ang_vel_z_exp.weight = 3.0
-        self.rewards.stand_still.weight = -3.0
-        self.rewards.stand_still.params["threshold"] = 0.1
+        self.rewards.stand_still.weight = -1.0
         self.rewards.stalling_penalty.weight = -1.0
         self.rewards.stalling_penalty.params["vel_threshold"] = 0.1
         self.rewards.stalling_penalty.params["distance_threshold"] = 0.3
@@ -104,13 +103,13 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.undesired_contacts.params["threshold"] = 1.0
         
         # Others
-        self.rewards.feet_slide.weight = -0.2
+        self.rewards.feet_slide.weight = -1.0
         self.rewards.feet_slide.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_slide.params["asset_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_air_time.weight = 0.1
         self.rewards.feet_air_time.params["threshold"] = 0.3
         self.rewards.feet_air_time.params["sensor_cfg"].body_names = [self.foot_link_name]
-        self.rewards.air_time_variance.weight = -2.0
+        self.rewards.air_time_variance.weight = -0.2
         self.rewards.air_time_variance.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_stumble.weight = -1.0
 
