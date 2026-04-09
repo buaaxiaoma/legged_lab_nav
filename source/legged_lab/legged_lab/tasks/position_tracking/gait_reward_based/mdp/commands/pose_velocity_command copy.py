@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .commands_cfg import PoseVelocityCommandCfg
 
 
-class PoseVelocityCommand(CommandTerm):
+class PoseVelocityCommand1(CommandTerm):
     """Velocity command based on the 2D flat patch command generator."""
 
     cfg: PoseVelocityCommandCfg
@@ -191,6 +191,10 @@ class PoseVelocityCommand(CommandTerm):
             self.terrain.terrain_levels[env_ids], self.terrain.terrain_types[env_ids], ids
         ]
 
+        target_vec = self.pos_command_w[env_ids] - self.robot.data.root_pos_w[env_ids]
+        target_direction = torch.atan2(target_vec[:, 1], target_vec[:, 0])
+        self.heading_target[env_ids] = target_direction
+
         # sample velocity commands
         r = torch.empty(len(env_ids), device=self.device)
         # -- linear velocity - x direction
@@ -246,16 +250,9 @@ class PoseVelocityCommand(CommandTerm):
         self.pos_command_b[:] = quat_apply_inverse(yaw_quat(self.robot.data.root_quat_w), target_vec)
         self.vel_command_b[:, :2] = self.pos_command_b[:, :2] * self.cfg.velocity_control_stiffness
 
-        # set heading command to point towards target
-        target_vec = self.pos_command_w - self.robot.data.root_pos_w
-        target_direction = torch.atan2(target_vec[:, 1], target_vec[:, 0])
-
-        # compute errors to find the closest direction to the current heading
-        # this is done to avoid the discontinuity at the -pi/pi boundary
-        self.heading_command_w = wrap_to_pi(target_direction - self.robot.data.heading_w)
-
-        self.vel_command_b[:, 2] = self.heading_command_w * self.cfg.heading_control_stiffness
-        self.vel_command_b[:, 2] *= torch.clamp((target_dist - 0.3) / 0.3, min=0.0, max=1.0)
+        self.heading_error = wrap_to_pi(self.heading_target - self.robot.data.heading_w)
+        self.vel_command_b[:, 2] = self.heading_error * self.cfg.heading_control_stiffness
+        # self.vel_command_b[:, 2] *= torch.clamp((target_dist - 0.1) / 0.3, min=0.0, max=1.0)
 
         # scale linear velocity so the dominant axis hits its limit and
         # the other axis preserves its ratio
