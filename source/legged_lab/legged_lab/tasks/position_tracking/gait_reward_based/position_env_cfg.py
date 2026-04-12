@@ -141,13 +141,13 @@ class CommandsCfg:
         rel_standing_envs=0.05,
         ranges=mdp.PoseVelocityCommandCfg.Ranges(lin_vel_x=(0.0, 3.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(-1.0, 1.0)),
         velocity_ranges={
-        "perlin_rough": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.5, 0.5), "ang_vel_z": (-1.5, 1.5)},
-        "square_gaps_easy": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.5, 0.5), "ang_vel_z": (-1.5, 1.5)},
-        "square_gaps_hard": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.5, 0.5), "ang_vel_z": (-1.5, 1.5)},
-        "stairs_up_down": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.5, 0.5), "ang_vel_z": (-1.5, 1.5)},
-        "stairs_down_up": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.5, 0.5), "ang_vel_z": (-1.5, 1.5)},
-        "pyramid_stairs_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.5, 0.5), "ang_vel_z": (-1.5, 1.5)},
-        "pyramid_stairs_inv_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.5, 0.5), "ang_vel_z": (-1.5, 1.5)},
+        "perlin_rough": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "square_gaps_easy": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "square_gaps_hard": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "stairs_up_down": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "stairs_down_up": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "pyramid_stairs_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "pyramid_stairs_inv_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
     },
         only_positive_lin_vel_x=True,
         lin_vel_threshold=0.0,
@@ -384,17 +384,17 @@ class EventCfg:
         },
     )
 
-    # randomize_actuator_gains = EventTerm(
-    #     func=mdp.randomize_actuator_gains,
-    #     mode="reset",
-    #     params={
-    #         "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
-    #         "stiffness_distribution_params": (0.5, 2.0),
-    #         "damping_distribution_params": (0.5, 2.0),
-    #         "operation": "scale",
-    #         "distribution": "uniform",
-    #     },
-    # )
+    randomize_actuator_gains = EventTerm(
+        func=mdp.randomize_actuator_gains,
+        mode="reset",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", joint_names=".*"),
+            "stiffness_distribution_params": (0.8, 1.2),
+            "damping_distribution_params": (0.8, 1.2),
+            "operation": "scale",
+            "distribution": "uniform",
+        },
+    )
 
     randomize_reset_base = EventTerm(
         func=mdp.reset_root_state_uniform,

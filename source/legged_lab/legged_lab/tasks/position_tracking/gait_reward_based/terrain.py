@@ -35,7 +35,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             },
         ),
         "square_gaps_easy": terrain_gen.PerlinSquareGapTerrainCfg(
-            proportion=0.2,
+            proportion=0.15,
             gap_distance_range=(0.05, 0.40),
             gap_depth=(0.20, 0.45),
             platform_width=2.8,
@@ -54,7 +54,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             },
         ),
         "square_gaps_hard": terrain_gen.PerlinSquareGapTerrainCfg(
-            proportion=0.20,
+            proportion=0.15,
             gap_distance_range=(0.25, 0.95),
             gap_depth=(0.45, 0.90),
             platform_width=2.0,
@@ -84,7 +84,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             # wall_height=5.0,
             # wall_thickness=0.05,
             perlin_cfg=terrain_gen.PerlinPlaneTerrainCfg(
-                noise_scale=0.02,
+                noise_scale=0.05,
                 noise_frequency=20,
                 fractal_octaves=2,
                 fractal_lacunarity=2.0,
@@ -113,7 +113,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             # wall_height=5.0,
             # wall_thickness=0.05,
             perlin_cfg=terrain_gen.PerlinPlaneTerrainCfg(
-                noise_scale=0.02,
+                noise_scale=0.05,
                 noise_frequency=20,
                 fractal_octaves=2,
                 fractal_lacunarity=2.0,
@@ -131,7 +131,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             },
         ),
         "pyramid_stairs_high": terrain_gen.PerlinPyramidStairsTerrainCfg(
-            proportion=0.1,
+            proportion=0.15,
             step_height_range=(0.08, 0.45),
             step_width=1.2,
             platform_width=3.5,
@@ -140,7 +140,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             # wall_height=5.0,
             # wall_thickness=0.05,
             perlin_cfg=terrain_gen.PerlinPlaneTerrainCfg(
-                noise_scale=0.02,
+                noise_scale=0.05,
                 noise_frequency=20,
                 fractal_octaves=2,
                 fractal_lacunarity=2.0,
@@ -158,7 +158,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             },
         ),
         "pyramid_stairs_inv_high": terrain_gen.PerlinInvertedPyramidStairsTerrainCfg(
-            proportion=0.1,
+            proportion=0.15,
             step_height_range=(0.08, 0.45),
             step_width=1.2,
             platform_width=3.5,
@@ -167,7 +167,7 @@ ROUGH_TERRAINS_CFG = TerrainGeneratorCfg(
             # wall_height=5.0,
             # wall_thickness=0.05,
             perlin_cfg=terrain_gen.PerlinPlaneTerrainCfg(
-                noise_scale=0.02,
+                noise_scale=0.05,
                 noise_frequency=20,
                 fractal_octaves=2,
                 fractal_lacunarity=2.0,
