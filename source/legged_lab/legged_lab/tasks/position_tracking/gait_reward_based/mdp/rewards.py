@@ -257,20 +257,21 @@ class GaitReward(ManagerTermBase):
         se_act_1 = torch.clip(torch.square(contact_time[:, foot_0] - air_time[:, foot_1]), max=self.max_err**2)
         return torch.exp(-(se_act_0 + se_act_1) / self.std)
 
-def air_time_variance_penalty(env: ManagerBasedRLEnv, command_name: str, sensor_cfg: SceneEntityCfg, command_threshold: float = 0.2) -> torch.Tensor:
+def air_time_variance_penalty(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg) -> torch.Tensor:
     """Penalize variance in the amount of time each foot spends in the air/on the ground relative to each other"""
     # extract the used quantities (to enable type-hinting)
     contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
     if contact_sensor.cfg.track_air_time is False:
         raise RuntimeError("Activate ContactSensor's track_air_time!")
-    # compute the reward
-    last_air_time = contact_sensor.data.last_air_time[:, sensor_cfg.body_ids]
-    last_contact_time = contact_sensor.data.last_contact_time[:, sensor_cfg.body_ids]
-    variance = torch.var(torch.clip(last_air_time, max=0.5), dim=1) + torch.var(
-        torch.clip(last_contact_time, max=0.5), dim=1)
-    variance *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > command_threshold
-
-    death_hoist_penalty = torch.sum(torch.relu(last_air_time - 0.8), dim=1)
+    # Use current mode durations so a continuously hoisted foot is penalized every step,
+    # instead of only when contact mode switches.
+    current_air_time = contact_sensor.data.current_air_time[:, sensor_cfg.body_ids]
+    current_contact_time = contact_sensor.data.current_contact_time[:, sensor_cfg.body_ids]
+    variance = torch.var(torch.clip(current_air_time, max=0.5), dim=1) + torch.var(
+        torch.clip(current_contact_time, max=0.5), dim=1
+    )
+    # Keep anti-hoist active even near target (small command), preventing reward loopholes at standstill.
+    death_hoist_penalty = torch.sum(torch.relu(current_air_time - 0.8), dim=1)
 
     return variance + death_hoist_penalty
 

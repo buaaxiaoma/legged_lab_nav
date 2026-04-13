@@ -109,8 +109,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.feet_air_time.weight = 0.1
         self.rewards.feet_air_time.params["threshold"] = 0.4
         self.rewards.feet_air_time.params["sensor_cfg"].body_names = [self.foot_link_name]
-        self.rewards.air_time_variance.weight = -1.0
-        self.rewards.air_time_variance.params["command_threshold"] = 0.2
+        self.rewards.air_time_variance.weight = -0.5
         self.rewards.air_time_variance.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_stumble.weight = -0.5
         self.rewards.feet_edge.weight = -0.1
