@@ -139,15 +139,17 @@ class CommandsCfg:
         velocity_control_stiffness=2.0,
         heading_control_stiffness=2.0,
         rel_standing_envs=0.05,
-        ranges=mdp.PoseVelocityCommandCfg.Ranges(lin_vel_x=(0.0, 3.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(-1.0, 1.0)),
+        ranges=mdp.PoseVelocityCommandCfg.Ranges(lin_vel_x=(0.0, 0.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(-1.0, 1.0)),
+        random_velocity_terrain=["perlin_rough_stand"],
         velocity_ranges={
-        "perlin_rough": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
-        "square_gaps_easy": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
-        "square_gaps_hard": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
-        "stairs_up_down": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
-        "stairs_down_up": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
-        "pyramid_stairs_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
-        "pyramid_stairs_inv_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (-0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "perlin_rough": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "perlin_rough_stand": {"lin_vel_x": (0.0, 0.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (0.0, 0.0)},
+        "square_gaps_easy": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "square_gaps_hard": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "stairs_up_down": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "stairs_down_up": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "pyramid_stairs_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
+        "pyramid_stairs_inv_high": {"lin_vel_x": (0.5, 2.0), "lin_vel_y": (0.0, 0.0), "ang_vel_z": (-1.5, 1.5)},
     },
         only_positive_lin_vel_x=True,
         lin_vel_threshold=0.0,
@@ -218,22 +220,22 @@ class ObservationsCfg:
             clip=(-100.0, 100.0),
             scale=1.0,
         )
-        # height_scan = ObsTerm(
-        #     func=mdp.HeightScanRand,
-        #     params={"asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"), 
-        #             "sensor_cfg": SceneEntityCfg("height_scanner"),
-        #             "grid_height": 17,
-        #             "grid_width": 11,
-        #             "random_delay_max_frames": 3,
-        #             "random_delay_resample_prob": 0.1},
-        #     clip=(-1.0, 1.0),
-        #     scale=1.0,
-        # )
         height_scan = ObsTerm(
-            func=mdp.height_scan,
-            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+            func=mdp.HeightScanRand,
+            params={"asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"), 
+                    "sensor_cfg": SceneEntityCfg("height_scanner"),
+                    "grid_height": 17,
+                    "grid_width": 11,
+                    "random_delay_max_frames": 5,
+                    "random_delay_resample_prob": 0.2},
             noise=Unoise(n_min=-0.1, n_max=0.1),
+            scale=1.0,
         )
+        # height_scan = ObsTerm(
+        #     func=mdp.height_scan,
+        #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+        #     noise=Unoise(n_min=-0.1, n_max=0.1),
+        # )
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -290,17 +292,6 @@ class ObservationsCfg:
             clip=(-100.0, 100.0),
             scale=1.0,
         )
-        # height_scan = ObsTerm(
-        #     func=mdp.HeightScanRand,
-        #     params={"asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
-        #             "sensor_cfg": SceneEntityCfg("height_scanner"),
-        #             "grid_height": 17,
-        #             "grid_width": 11,
-        #             "random_delay_max_frames": 3,
-        #             "random_delay_resample_prob": 0.1},
-        #     clip=(-1.0, 1.0),
-        #     scale=1.0,
-        # )
         height_scan = ObsTerm(
             func=mdp.height_scan,
             params={"sensor_cfg": SceneEntityCfg("height_scanner")},
@@ -436,15 +427,19 @@ class RewardsCfg:
     track_ang_vel_z_exp = RewTerm(
         func=mdp.track_ang_vel_z_exp, weight=2.0, params={"command_name": "base_velocity", "std": 0.5}
     )
-    stand_still = RewTerm(func=mdp.stand_still_joint_deviation_l1, weight=0.0, params={"command_name": "base_velocity"})
+    stand_still = RewTerm(func=mdp.stand_still, weight=0.0, params={"command_name": "base_velocity", "command_threshold": 0.1})
     stalling_penalty = RewTerm(
         func=mdp.stalling_penalty,
         weight=0.0,
         params={"command_name": "base_velocity"},
     )
-
+    heading_error = RewTerm(
+        func=mdp.heading_error,
+        weight=0.0,
+        params={"command_name": "base_velocity"},
+    )
+    
     #base
-    base_height = RewTerm(func=mdp.base_height_l1, weight=0.0, params={"sensor_cfg": SceneEntityCfg("height_scanner_base")})
     base_lin_vel_z = RewTerm(func=mdp.lin_vel_z_l2, weight=0.0)
     base_ang_vel_xy = RewTerm(func=mdp.ang_vel_xy_l2, weight=0.0)
     flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=0.0)
@@ -501,31 +496,19 @@ class RewardsCfg:
         },
     )
     feet_air_time = RewTerm(
-        func=mdp.feet_air_time,
+        func=mdp.feet_air_time1,
         weight=0.0,
         params={
             "command_name": "base_velocity",
             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
             "threshold": 0.5,
-        },
-    )
-    feet_height = RewTerm(
-        func=mdp.feet_height_body,
-        weight=0.0,
-        params={
-            "command_name": "base_velocity",
-            "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
-            "target_height": -0.25,
+            "command_threshold": 0.1,
         },
     )
     air_time_variance = RewTerm(
         func=mdp.air_time_variance_penalty,
         weight=0.0,
-        params={
-            "command_name": "base_velocity",
-            "command_threshold": 0.2,
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot")},
-            
+        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot")},   
     )
     feet_edge = RewTerm(
         func=mdp.feet_edge_penalty,

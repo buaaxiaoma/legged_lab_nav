@@ -48,11 +48,8 @@ class HeightScanRand(ManagerTermBase):
         sensor_cfg: SceneEntityCfg,
         grid_height: int | None = None,
         grid_width: int | None = None,
-        gaussian_std_h: float = 0.1,
         dropout_prob: float = 0.05,
         missing_value: float = 0.0,
-        leg_occlusion_radius: float = 0.1,  # 10cm 半径
-        leg_occlusion_prob: float = 0.7,
         enable_edge_noise: bool = True,
         edge_grad_threshold: float = 0.05,
         edge_noise_std: float = 0.03,
@@ -121,9 +118,7 @@ class HeightScanRand(ManagerTermBase):
         h = zs.clone()
 
         # 2. 应用各种噪声
-        h = self._apply_gaussian_noise(h, gaussian_std_h)
-        h = self._apply_dropout(h, dropout_prob, missing_value)
-        h = self._apply_leg_occlusion(h, xs, ys, env, asset_cfg, leg_occlusion_radius, leg_occlusion_prob, missing_value)
+        # h = self._apply_dropout(h, dropout_prob, missing_value)
         h = self._apply_edge_noise(h, enable_edge_noise, edge_grad_threshold, edge_noise_std)
 
         # 3. 应用时间延迟随机化（延迟缓冲按展平形式维护）
@@ -183,48 +178,12 @@ class HeightScanRand(ManagerTermBase):
         self._history_write_idx = (self._history_write_idx + 1) % buffer_len
         return delayed_h
 
-    def _apply_gaussian_noise(self, h, gaussian_std_h):
-        """应用高斯噪声"""
-        if gaussian_std_h > 0.0:
-            h = h + torch.randn_like(h) * gaussian_std_h
-        return h
-
     def _apply_dropout(self, h, dropout_prob, missing_value):
         """应用随机 Dropout"""
         if dropout_prob > 0.0:
             drop_mask = (torch.rand_like(h) < dropout_prob)
             h = torch.where(drop_mask, torch.full_like(h, missing_value), h)
         return h
-
-    def _apply_leg_occlusion(self, h, xs, ys, env, asset_cfg, leg_occlusion_radius, leg_occlusion_prob, missing_value):
-        """应用腿部遮挡模型"""
-        asset: RigidObject = env.scene[asset_cfg.name]
-        foot_positions = asset.data.body_pos_w[:, asset_cfg.body_ids, :]
-        
-        if foot_positions is None:
-            return h
-            
-        num_envs = h.shape[0]
-        num_feet = foot_positions.shape[1]
-
-        # 广播形状准备计算距离
-        # foot: (N, num_feet, 1, 1)
-        foot_x = foot_positions[..., 0].view(num_envs, num_feet, 1, 1)
-        foot_y = foot_positions[..., 1].view(num_envs, num_feet, 1, 1)
-        
-        # grid: (N, 1, H, W)
-        xs_exp = xs.unsqueeze(1)
-        ys_exp = ys.unsqueeze(1)
-
-        # 计算距离 (N, num_feet, H, W)
-        dist_sq = (xs_exp - foot_x) ** 2 + (ys_exp - foot_y) ** 2
-
-        # 遮挡掩码
-        near_any_foot = (dist_sq < leg_occlusion_radius**2).any(dim=1) # (N, H, W)
-        rand_mask = torch.rand_like(h) < leg_occlusion_prob
-        occlude_mask = near_any_foot & rand_mask
-
-        return torch.where(occlude_mask, torch.full_like(h, missing_value), h)
 
     def _apply_edge_noise(self, h, enable_edge_noise, edge_grad_threshold, edge_noise_std):
         """应用地形边缘增强噪声 (向量化实现)"""

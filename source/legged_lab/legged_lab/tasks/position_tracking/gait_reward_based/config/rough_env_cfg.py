@@ -27,14 +27,12 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.observations.policy.base_ang_vel.scale = 0.2
         self.observations.policy.joint_pos.scale = 1.0
         self.observations.policy.joint_vel.scale = 0.05
-        # self.observations.policy.height_scan = None
 
         # ------------------------------Commands------------------------------
         # Smooth command changes and avoid near-zero command jitter.
-        self.commands.base_velocity.resampling_time_range = (10.0, 14.0)
+        self.commands.base_velocity.resampling_time_range = (10.0, 10.0)
         self.commands.base_velocity.velocity_control_stiffness = 1.0
-        self.commands.base_velocity.heading_control_stiffness = 1.0
-        self.commands.base_velocity.rel_standing_envs = 0.0
+        self.commands.base_velocity.heading_control_stiffness = 1.5
         self.commands.base_velocity.only_positive_lin_vel_x = True
         self.commands.base_velocity.lin_vel_threshold = 0.05
         self.commands.base_velocity.ang_vel_threshold = 0.1
@@ -81,10 +79,11 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         # Task
         self.rewards.track_lin_vel_xy_exp.weight = 3.0
         self.rewards.track_ang_vel_z_exp.weight = 3.0
-        self.rewards.stand_still.weight = -2.0
+        self.rewards.stand_still.weight = -1.0
         self.rewards.stalling_penalty.weight = -1.0
-        self.rewards.stalling_penalty.params["vel_threshold"] = 0.1
+        self.rewards.stalling_penalty.params["vel_threshold"] = 0.15
         self.rewards.stalling_penalty.params["distance_threshold"] = 0.3
+        # self.rewards.heading_error.weight = -0.5
         
         # Joint penalties
         self.rewards.joint_torques_l2.weight = -1e-5
@@ -119,7 +118,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
             self.disable_zero_weight_rewards()
 
         # ------------------------------Terminations------------------------------
-        self.terminations.illegal_contact.params["sensor_cfg"].body_names = [self.base_link_name, "Head_.*"]
+        self.terminations.illegal_contact.params["sensor_cfg"].body_names = [self.base_link_name, "Head_lower*"]
 
 @configclass
 class UnitreeGo2RoughEnvCfg_PLAY(UnitreeGo2RoughEnvCfg):
@@ -131,8 +130,8 @@ class UnitreeGo2RoughEnvCfg_PLAY(UnitreeGo2RoughEnvCfg):
         self.scene.terrain.max_init_terrain_level = None
         # reduce the number of terrains to save memory
         if self.scene.terrain.terrain_generator is not None:
-            self.scene.terrain.terrain_generator.num_rows = 5
-            self.scene.terrain.terrain_generator.num_cols = 5
+            self.scene.terrain.terrain_generator.num_rows = 4
+            self.scene.terrain.terrain_generator.num_cols = 4
             self.scene.terrain.terrain_generator.curriculum = False
 
         # disable randomization for play
