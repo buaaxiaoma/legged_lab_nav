@@ -74,7 +74,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         # Base
         self.rewards.base_lin_vel_z.weight = -2.0
         self.rewards.base_ang_vel_xy.weight = -0.05
-        self.rewards.flat_orientation_l2.weight = -0.5
+        self.rewards.flat_orientation_l2.weight = -0.4
         
         # Task
         self.rewards.track_lin_vel_xy_exp.weight = 3.0

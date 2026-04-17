@@ -16,7 +16,7 @@ from isaaclab.assets import Articulation, RigidObject
 from isaaclab.envs import mdp
 from legged_lab.tasks.position_tracking.gait_reward_based.mdp.commands import *
 
-def task_reward(env: ManagerBasedRLEnv, command_name: str, Tr: float = 1.0) -> torch.Tensor:
+def task_reward(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     """Compute the task reward based on the distance to the target position and the remaining time.
 
     Args:
@@ -31,13 +31,10 @@ def task_reward(env: ManagerBasedRLEnv, command_name: str, Tr: float = 1.0) -> t
     robot_pos = command.robot_pos_w
     target_pos = command.target_pos_w
 
-    distance = torch.norm(robot_pos - target_pos, dim=-1)  # (num_envs,)
-
-    # Condition for when to apply the reward
-    condition = env.episode_length_buf * env.step_dt >= env.max_episode_length_s - Tr
+    distance = torch.norm(robot_pos - target_pos, dim=-1)  # (num_envs,
     
     # Calculate reward using torch.where for vectorized operation
-    reward = torch.where(condition, 1.0 - 0.5 * distance, 0.0)
+    reward = 1.0 - 0.5 * distance
     
     return reward
 
@@ -76,9 +73,11 @@ def stand_still(
     """Penalize moving when there is no velocity command."""
     asset = env.scene[asset_cfg.name]
     dof_error = torch.sum(torch.abs(asset.data.joint_pos - asset.data.default_joint_pos), dim=1)
+    command: PoseVelocityCommand = env.command_manager.get_term(command_name)
+    distance = torch.norm(command.robot_pos_w - command.target_pos_w, dim=-1)  # (num_envs,)
     return (
         dof_error
-        * (torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) < command_threshold)
+        * (distance < 0.1)
         * (torch.abs(env.command_manager.get_command(command_name)[:, 2]) < command_threshold)
     )
     
@@ -200,7 +199,7 @@ def air_time_variance_penalty(env: ManagerBasedRLEnv, sensor_cfg: SceneEntityCfg
         torch.clip(current_contact_time, max=0.5), dim=1
     )
     # Keep anti-hoist active even near target (small command), preventing reward loopholes at standstill.
-    death_hoist_penalty = torch.sum(torch.relu(current_air_time - 0.8), dim=1)
+    death_hoist_penalty = torch.sum(torch.relu(current_air_time - 1.0), dim=1)
 
     return variance + death_hoist_penalty
 
