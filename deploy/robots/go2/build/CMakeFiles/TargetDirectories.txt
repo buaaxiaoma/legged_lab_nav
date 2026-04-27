@@ -1,0 +1,4 @@
+/home/ws/projects/legged_lab_nav/deploy/robots/go2/build/CMakeFiles/go2_controller_lib.dir
+/home/ws/projects/legged_lab_nav/deploy/robots/go2/build/CMakeFiles/go2_ctrl.dir
+/home/ws/projects/legged_lab_nav/deploy/robots/go2/build/CMakeFiles/edit_cache.dir
+/home/ws/projects/legged_lab_nav/deploy/robots/go2/build/CMakeFiles/rebuild_cache.dir

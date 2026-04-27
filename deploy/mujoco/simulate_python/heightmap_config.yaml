@@ -1,0 +1,11 @@
+expected_dim: 187
+grid_height: 17
+grid_width: 11
+size:
+- 1.6
+- 1.0
+resolution: 0.1
+ordering: xy
+ray_offset_z: 20.0
+height_offset: 0.5
+frame_id: base_link

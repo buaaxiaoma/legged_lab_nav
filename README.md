@@ -262,13 +262,13 @@ The video will be saved in the `logs/rsl_rl/experiment_name/run_name/videos/play
 To train on different terrains, you can run the following command:
 
 ```bash
-python scripts/rsl_rl/train.py --task=Lab-Position-Rough-Unitree-Go2-v0 --headless --device cuda:x agent.device=cuda:x
+python scripts/rsl_rl/train.py --task=Lab-Position-Rough-Unitree-Go2-v0 --headless --device cuda:x agent.device=cuda:x --export_io_descriptors
 ```
 
 If you want to train it using symmetry data augmentation, you can run the following command:
 
 ```bash
-python scripts/rsl_rl/train.py --task=Lab-Position-Rough-Unitree-Go2-v0 --headless --agent=rsl_rl_with_symmetry_cfg_entry_point --run_name=with_symmetry
+python scripts/rsl_rl/train.py --task=Lab-Position-Rough-Unitree-Go2-v0 --headless --agent=rsl_rl_with_symmetry_cfg_entry_point --run_name=with_symmetry --export_io_descriptors
 ```
 
 </details>

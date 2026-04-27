@@ -77,7 +77,7 @@ def stand_still(
     distance = torch.norm(command.robot_pos_w - command.target_pos_w, dim=-1)  # (num_envs,)
     return (
         dof_error
-        * (distance < 0.1)
+        * (torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) < command_threshold)
         * (torch.abs(env.command_manager.get_command(command_name)[:, 2]) < command_threshold)
     )
     
@@ -99,9 +99,11 @@ def feet_air_time1(
     last_air_time = contact_sensor.data.last_air_time[:, sensor_cfg.body_ids]
     reward = torch.sum((last_air_time - threshold) * first_contact, dim=1)
     # no reward for zero command
-    reward *= torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > command_threshold
-    reward *= torch.abs(env.command_manager.get_command(command_name)[:, 2]) > command_threshold
+    vel = torch.norm(env.command_manager.get_command(command_name)[:, :2], dim=1) > command_threshold
+    ang = torch.abs(env.command_manager.get_command(command_name)[:, 2]) > command_threshold
+    condition = vel | ang
     # Scale with gravity projection (optional, but good for stability)
+    reward *= condition
     reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
     return reward
 

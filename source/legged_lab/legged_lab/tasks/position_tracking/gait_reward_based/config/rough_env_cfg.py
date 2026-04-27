@@ -34,7 +34,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.commands.base_velocity.velocity_control_stiffness = 1.0
         self.commands.base_velocity.heading_control_stiffness = 1.5
         self.commands.base_velocity.only_positive_lin_vel_x = True
-        self.commands.base_velocity.lin_vel_threshold = 0.05
+        self.commands.base_velocity.lin_vel_threshold = 0.08
         self.commands.base_velocity.ang_vel_threshold = 0.1
         self.commands.base_velocity.target_dis_threshold = 0.1
         self.commands.base_velocity.target_slowdown_distance = 0.4
@@ -74,14 +74,14 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         # Base
         self.rewards.base_lin_vel_z.weight = -2.0
         self.rewards.base_ang_vel_xy.weight = -0.05
-        self.rewards.flat_orientation_l2.weight = -0.4
+        self.rewards.flat_orientation_l2.weight = -0.5
         
         # Task
         self.rewards.track_lin_vel_xy_exp.weight = 3.0
         self.rewards.track_ang_vel_z_exp.weight = 3.0
         self.rewards.stand_still.weight = -1.0
         self.rewards.stalling_penalty.weight = -1.0
-        self.rewards.stalling_penalty.params["vel_threshold"] = 0.15
+        self.rewards.stalling_penalty.params["vel_threshold"] = 0.1
         self.rewards.stalling_penalty.params["distance_threshold"] = 0.3
         # self.rewards.heading_error.weight = -0.5
         
@@ -102,7 +102,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.undesired_contacts.params["threshold"] = 1.0
         
         # Others
-        self.rewards.feet_slide.weight = -0.5
+        self.rewards.feet_slide.weight = -1.0
         self.rewards.feet_slide.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_slide.params["asset_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_air_time.weight = 0.1
@@ -110,7 +110,7 @@ class UnitreeGo2RoughEnvCfg(LocomotionPositionEnvCfg):
         self.rewards.feet_air_time.params["sensor_cfg"].body_names = [self.foot_link_name]
         self.rewards.air_time_variance.weight = -0.5
         self.rewards.air_time_variance.params["sensor_cfg"].body_names = [self.foot_link_name]
-        self.rewards.feet_stumble.weight = -0.5
+        self.rewards.feet_stumble.weight = -1.0
         self.rewards.feet_edge.weight = -0.1
 
         # If the weight of rewards is 0, set rewards to None
@@ -130,8 +130,8 @@ class UnitreeGo2RoughEnvCfg_PLAY(UnitreeGo2RoughEnvCfg):
         self.scene.terrain.max_init_terrain_level = None
         # reduce the number of terrains to save memory
         if self.scene.terrain.terrain_generator is not None:
-            self.scene.terrain.terrain_generator.num_rows = 4
-            self.scene.terrain.terrain_generator.num_cols = 4
+            self.scene.terrain.terrain_generator.num_rows = 5
+            self.scene.terrain.terrain_generator.num_cols = 5
             self.scene.terrain.terrain_generator.curriculum = False
 
         # disable randomization for play

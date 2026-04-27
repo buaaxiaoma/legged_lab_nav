@@ -7,6 +7,7 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.sensors import RayCaster
 from isaaclab.envs.mdp import ManagerTermBase
+from isaaclab.envs.utils.io_descriptors import generic_io_descriptor, record_dtype, record_shape
 from typing import TYPE_CHECKING
 from legged_lab.tasks.position_tracking.gait_reward_based.mdp.commands import *
 
@@ -20,6 +21,11 @@ if TYPE_CHECKING:
 #     remaining_time = 1.0 - (env.episode_length_buf[:, None] * env.step_dt) / env.max_episode_length
 #     return remaining_time
 
+@generic_io_descriptor(
+    dtype=torch.float32,
+    observation_type="Command",
+    on_inspect=[record_shape, record_dtype],
+)
 def target_pos(env: ManagerBasedRLEnv, command_name: str) -> torch.Tensor:
     "Target position relative to the robot's base in world frame, shape (N, 2)."
     command: PoseVelocityCommand = env.command_manager.get_term(command_name)
@@ -40,7 +46,17 @@ class HeightScanRand(ManagerTermBase):
         self._history_buffer = None
         self._history_write_idx = 0
         self._delay_frames = None
-    
+
+        # Expose descriptor on the callable object instance for ObservationManager export.
+        self._descriptor = self.__call__._descriptor
+        self._descriptor.name = "height_scan"
+        self._descriptor.full_path = f"{self.__class__.__module__}.{self.__class__.__name__}"
+
+    @generic_io_descriptor(
+        dtype=torch.float32,
+        observation_type="HeightScan",
+        on_inspect=[record_shape, record_dtype],
+    )
     def __call__(
         self,
         env: ManagerBasedRLEnv,

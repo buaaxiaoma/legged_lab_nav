@@ -1,0 +1,37 @@
+FSM:
+  _: # enabled fsms
+    Passive:
+      id: 1
+    FixStand:
+      id: 2
+    Velocity:
+      id: 3
+      type: RLBase
+  Passive:
+    transitions: 
+      FixStand: LT + A.on_pressed
+    mode: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    kd: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+  FixStand:
+    transitions: 
+      Passive: LT + B.on_pressed
+      Velocity: start.on_pressed
+    kp: [60, 80, 80, 60, 80, 80, 60, 80, 80, 60, 80, 80]
+    kd: [5, 4, 4, 5, 4, 4, 5, 4, 4, 5, 4, 4]
+    ts: [0, 1, 2]
+    qs: [
+      [],
+      [0.0, 1.36, -2.65, 0.0, 1.36, -2.65, 0.0, 1.36, -2.65, 0.0, 1.36, -2.65],
+      [-0.1, 0.8, -1.5, 0.1, 0.8, -1.5, -0.1, 1, -1.5, 0.1, 1, -1.5],
+    ]
+  Velocity:
+    transitions:
+      Passive: LT + B.on_pressed
+    policy_dir: config
+    local_target_topic: rt/local_target_pos_b
+    local_target_timeout_ms: 200
+    # Optional runtime command-range override for local-target tracking
+    command_ranges:
+      lin_vel_x: [0.0, 2.0]
+      lin_vel_y: [0.0, 0.0]
+      ang_vel_z: [-1.5, 1.5]

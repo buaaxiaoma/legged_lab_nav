@@ -8,6 +8,7 @@
 """Launch Isaac Sim Simulator first."""
 
 import argparse
+import inspect
 import sys
 
 from isaaclab.app import AppLauncher
@@ -94,7 +95,7 @@ from isaaclab.envs import (
 )
 from isaaclab.utils.dict import print_dict
 from isaaclab.utils.io import dump_yaml
-from isaaclab_rl.rsl_rl import RslRlBaseRunnerCfg, RslRlVecEnvWrapper
+from isaaclab_rl.rsl_rl import RslRlBaseRunnerCfg, RslRlVecEnvWrapper, handle_deprecated_rsl_rl_cfg
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 
@@ -112,6 +113,38 @@ torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
 
 
+def _prune_unsupported_algorithm_kwargs(agent_cfg: RslRlBaseRunnerCfg) -> RslRlBaseRunnerCfg:
+    """Remove algorithm cfg fields unsupported by the installed rsl_rl algorithm class."""
+    if not hasattr(agent_cfg, "algorithm") or agent_cfg.algorithm is None:
+        return agent_cfg
+
+    alg_name = getattr(agent_cfg.algorithm, "class_name", None)
+    if alg_name is None:
+        return agent_cfg
+
+    try:
+        import rsl_rl.algorithms as rsl_algorithms
+
+        alg_cls = getattr(rsl_algorithms, alg_name, None)
+        if alg_cls is None:
+            return agent_cfg
+
+        sig = inspect.signature(alg_cls.__init__)
+        if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in sig.parameters.values()):
+            return agent_cfg
+
+        accepted_keys = set(sig.parameters.keys())
+        for key in list(vars(agent_cfg.algorithm).keys()):
+            if key == "class_name" or key in accepted_keys:
+                continue
+            print(f"[WARNING]: Removing unsupported '{alg_name}' algorithm argument: {key}")
+            delattr(agent_cfg.algorithm, key)
+    except Exception as exc:
+        logger.warning(f"Could not prune unsupported algorithm kwargs: {exc}")
+
+    return agent_cfg
+
+
 @hydra_task_config(args_cli.task, args_cli.agent)
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
     """Train with RSL-RL agent."""
@@ -121,6 +154,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     agent_cfg.max_iterations = (
         args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
     )
+    # handle deprecated configurations and version-specific compatibility
+    agent_cfg = handle_deprecated_rsl_rl_cfg(agent_cfg, installed_version)
+    # remove algorithm kwargs not supported by the installed rsl-rl class signature
+    agent_cfg = _prune_unsupported_algorithm_kwargs(agent_cfg)
 
     # set the environment seed
     # note: certain randomizations occur in the environment initialization so we set the seed here
@@ -211,7 +248,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     if agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation":
         print(f"[INFO]: Loading model checkpoint from: {resume_path}")
         # load previously trained model
-        runner.load(resume_path)
+        runner.load(resume_path, map_location=agent_cfg.device)
 
     # dump the configuration into log-directory
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)

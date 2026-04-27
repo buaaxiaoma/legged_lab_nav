@@ -1,0 +1,76 @@
+<mujoco model="go2 terrain scene">
+  <include file="go2.xml" />
+
+  <statistic center="3.00 0 0.35" extent="7.00" />
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0" />
+    <rgba haze="0.15 0.25 0.35 1" />
+    <global azimuth="-130" elevation="-20" />
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0 0 0" width="512" height="3072" />
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" markrgb="0.8 0.8 0.8" width="300" height="300" />
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="5 5" reflectance="0.2" />
+    <material name="rough_mat" rgba="0.36 0.34 0.28 1" />
+    <material name="rough_dark_mat" rgba="0.25 0.25 0.22 1" />
+    <material name="gap_mat" rgba="0.18 0.28 0.32 1" />
+    <material name="gap_hard_mat" rgba="0.12 0.20 0.25 1" />
+    <material name="pit_mat" rgba="0.20 0.18 0.16 1" />
+    <material name="stair_mat" rgba="0.45 0.42 0.36 1" />
+    <material name="platform_mat" rgba="0.39 0.32 0.46 1" />
+    <material name="platform_high_mat" rgba="0.48 0.35 0.22 1" />
+    <material name="marker_red" rgba="0.85 0.18 0.12 1" />
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 4.0" dir="0 0 -1" directional="true" />
+    <geom name="floor" size="0 0 0.05" type="plane" material="groundplane" friction="0.9 0.6 0.02" group="0" />
+
+    <!-- square_gaps_easy: gap_distance_range=(0.05, 0.4), gap_depth=(0.2, 0.45) -->
+    <geom name="start_square_gaps_easy_0000" type="box" pos="0.900 -2.350 0.035" size="0.100 0.100 0.035" material="marker_red" friction="0.9 0.6 0.02" group="1" />
+    <geom name="square_gaps_easy_entry_00_0001" type="box" pos="1.040 0.000 0.035" size="0.140 1.400 0.035" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_entry_01_0002" type="box" pos="1.320 0.000 0.070" size="0.140 1.400 0.070" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_entry_02_0003" type="box" pos="1.600 0.000 0.105" size="0.140 1.400 0.105" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_entry_03_0004" type="box" pos="1.880 0.000 0.140" size="0.140 1.400 0.140" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_slab_00_0005" type="box" pos="2.596 0.000 0.140" size="0.376 1.400 0.140" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_slab_01_0006" type="box" pos="3.613 0.000 0.140" size="0.363 1.400 0.140" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_slab_02_0007" type="box" pos="4.628 0.000 0.140" size="0.414 1.400 0.140" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_slab_03_0008" type="box" pos="5.551 0.000 0.140" size="0.439 1.400 0.140" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_slab_04_0009" type="box" pos="6.478 0.000 0.140" size="0.426 1.400 0.140" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_slab_05_0010" type="box" pos="7.345 0.000 0.140" size="0.366 1.400 0.140" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_exit_00_0011" type="box" pos="8.051 0.000 0.105" size="0.140 1.400 0.105" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_exit_01_0012" type="box" pos="8.331 0.000 0.070" size="0.140 1.400 0.070" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_easy_exit_02_0013" type="box" pos="8.611 0.000 0.035" size="0.140 1.400 0.035" material="gap_mat" friction="0.9 0.6 0.02" group="0" />
+
+    <!-- square_gaps_hard: gap_distance_range=(0.25, 0.95), gap_depth=(0.45, 0.9) -->
+    <geom name="start_square_gaps_hard_0014" type="box" pos="9.581 -2.350 0.035" size="0.100 0.100 0.035" material="marker_red" friction="0.9 0.6 0.02" group="1" />
+    <geom name="square_gaps_hard_entry_00_0015" type="box" pos="9.721 0.000 0.036" size="0.140 1.000 0.036" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_01_0016" type="box" pos="10.001 0.000 0.071" size="0.140 1.000 0.071" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_02_0017" type="box" pos="10.281 0.000 0.107" size="0.140 1.000 0.107" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_03_0018" type="box" pos="10.561 0.000 0.142" size="0.140 1.000 0.142" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_04_0019" type="box" pos="10.841 0.000 0.178" size="0.140 1.000 0.178" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_05_0020" type="box" pos="11.121 0.000 0.214" size="0.140 1.000 0.214" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_06_0021" type="box" pos="11.401 0.000 0.249" size="0.140 1.000 0.249" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_07_0022" type="box" pos="11.681 0.000 0.285" size="0.140 1.000 0.285" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_entry_08_0023" type="box" pos="11.961 0.000 0.321" size="0.140 1.000 0.321" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_slab_00_0024" type="box" pos="12.720 0.000 0.321" size="0.420 1.000 0.321" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_slab_01_0025" type="box" pos="13.791 0.000 0.321" size="0.314 1.000 0.321" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_slab_02_0026" type="box" pos="15.235 0.000 0.321" size="0.441 1.000 0.321" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_slab_03_0027" type="box" pos="16.674 0.000 0.321" size="0.344 1.000 0.321" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_slab_04_0028" type="box" pos="18.235 0.000 0.321" size="0.283 1.000 0.321" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_00_0029" type="box" pos="18.858 0.000 0.285" size="0.140 1.000 0.285" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_01_0030" type="box" pos="19.138 0.000 0.249" size="0.140 1.000 0.249" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_02_0031" type="box" pos="19.418 0.000 0.214" size="0.140 1.000 0.214" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_03_0032" type="box" pos="19.698 0.000 0.178" size="0.140 1.000 0.178" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_04_0033" type="box" pos="19.978 0.000 0.142" size="0.140 1.000 0.142" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_05_0034" type="box" pos="20.258 0.000 0.107" size="0.140 1.000 0.107" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_06_0035" type="box" pos="20.538 0.000 0.071" size="0.140 1.000 0.071" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+    <geom name="square_gaps_hard_exit_07_0036" type="box" pos="20.818 0.000 0.036" size="0.140 1.000 0.036" material="gap_hard_mat" friction="0.9 0.6 0.02" group="0" />
+
+    <!-- visual side lanes outside normal height scan width -->
+    <geom name="side_lane_0_0037" type="box" pos="11.494 -2.120 0.018" size="11.494 0.025 0.018" material="rough_mat" friction="0.9 0.6 0.02" group="1" />
+    <geom name="side_lane_1_0038" type="box" pos="11.494 2.120 0.018" size="11.494 0.025 0.018" material="rough_mat" friction="0.9 0.6 0.02" group="1" />
+  </worldbody>
+</mujoco>

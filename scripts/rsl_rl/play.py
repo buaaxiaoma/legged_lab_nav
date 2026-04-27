@@ -8,6 +8,7 @@
 """Launch Isaac Sim Simulator first."""
 
 import argparse
+import inspect
 import sys
 from typing import Any
 
@@ -177,6 +178,38 @@ def _print_policy_obs(obs: Any, step: int, max_elems: int, env_idx: int) -> None
         print(f"{prefix} {obs_name}: {_format_tensor_preview(tensor, max_elems, env_idx)}")
 
 
+def _prune_unsupported_algorithm_kwargs(agent_cfg: RslRlBaseRunnerCfg) -> RslRlBaseRunnerCfg:
+    """Remove algorithm cfg fields unsupported by the installed rsl_rl algorithm class."""
+    if not hasattr(agent_cfg, "algorithm") or agent_cfg.algorithm is None:
+        return agent_cfg
+
+    alg_name = getattr(agent_cfg.algorithm, "class_name", None)
+    if alg_name is None:
+        return agent_cfg
+
+    try:
+        import rsl_rl.algorithms as rsl_algorithms
+
+        alg_cls = getattr(rsl_algorithms, alg_name, None)
+        if alg_cls is None:
+            return agent_cfg
+
+        sig = inspect.signature(alg_cls.__init__)
+        if any(param.kind == inspect.Parameter.VAR_KEYWORD for param in sig.parameters.values()):
+            return agent_cfg
+
+        accepted_keys = set(sig.parameters.keys())
+        for key in list(vars(agent_cfg.algorithm).keys()):
+            if key == "class_name" or key in accepted_keys:
+                continue
+            print(f"[WARNING]: Removing unsupported '{alg_name}' algorithm argument: {key}")
+            delattr(agent_cfg.algorithm, key)
+    except Exception as exc:
+        print(f"[WARNING]: Could not prune unsupported algorithm kwargs: {exc}")
+
+    return agent_cfg
+
+
 @hydra_task_config(args_cli.task, args_cli.agent)
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
     """Play with RSL-RL agent."""
@@ -186,6 +219,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # override configurations with non-hydra CLI arguments
     agent_cfg: RslRlBaseRunnerCfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
+    # remove algorithm kwargs not supported by the installed rsl-rl class signature
+    agent_cfg = _prune_unsupported_algorithm_kwargs(agent_cfg)
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
 
     # set the environment seed
