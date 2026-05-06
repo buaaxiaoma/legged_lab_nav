@@ -8,7 +8,7 @@
 
 ## 已对齐训练 run
 
-- `/home/ws/projects/legged_lab_nav/logs/rsl_rl/unitree_go2_rough/2026-04-25_16-46-58`
+- `/home/ws/projects/legged_lab_nav/logs/rsl_rl/unitree_go2_rough/2026-04-26_10-09-56_target_pos`
 
 已同步到：
 
@@ -18,11 +18,11 @@
 
 其中：
 
-- `observations` 不含 `target_pos`
+- `observations` 包含 `target_pos`，ONNX 输入维度为 `234`
 - `commands.base_velocity.command_source = local_target`
 - `commands.base_velocity.ranges` 已从训练 `velocity_ranges` 选择移动地形范围：`lin_vel_x=[0.0, 2.0]`，`ang_vel_z=[-1.5, 1.5]`
 - MuJoCo 高程图参数已同步到 `deploy/mujoco/simulate_python/heightmap_config.yaml`
-- `policy.onnx` / `policy.pt` 已从该 run 的 `exported` 目录同步到部署目录
+- `policy.onnx` / `policy.pt` 已从 `model_49999.pt` 导出到该 run 的 `exported` 目录，并同步到部署目录
 
 
 ## 0) 导出 / 同步部署配置

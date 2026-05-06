@@ -1,5 +1,5 @@
 seed: 42
-device: cuda:0
+device: cuda:5
 num_steps_per_env: 24
 max_iterations: 50000
 empirical_normalization: {}
@@ -8,13 +8,13 @@ clip_actions: null
 check_for_nan: true
 save_interval: 500
 experiment_name: unitree_go2_rough
-run_name: ''
+run_name: target_pos
 logger: tensorboard
 neptune_project: isaaclab
 wandb_project: isaaclab
-resume: true
-load_run: 2026-04-03_20-36-25
-load_checkpoint: model_6500.pt
+resume: false
+load_run: .*
+load_checkpoint: model_.*.pt
 class_name: OnPolicyRunner
 actor: {}
 critic: {}
@@ -36,7 +36,11 @@ algorithm:
   normalize_advantage_per_mini_batch: false
   share_cnn_encoders: false
   rnd_cfg: null
-  symmetry_cfg: null
+  symmetry_cfg:
+    use_data_augmentation: true
+    use_mirror_loss: false
+    data_augmentation_func: legged_lab.tasks.position_tracking.gait_reward_based.mdp.symmetry.go2:compute_symmetric_states
+    mirror_loss_coeff: 0.0
 policy:
   class_name: ActorCritic
   init_noise_std: 1.0
